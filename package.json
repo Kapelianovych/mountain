@@ -1,0 +1,22 @@
+{
+  "name": "yass",
+  "version": "0.0.4",
+  "description": "Yet another simple server",
+  "main": "./src/yass.mjs",
+  "type": "module",
+  "scripts": {
+
+  },
+  "keywords": [
+    "Server",
+    "HTTP/2"
+  ],
+  "author": "Kapelianovych Yevhen",
+  "license": "MIT",
+  "dependencies": {
+    "mime": "^2.4.4"
+  },
+  "devDependencies": {
+
+  }
+}
