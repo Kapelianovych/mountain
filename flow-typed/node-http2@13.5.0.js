@@ -46,6 +46,7 @@ declare module 'http2' {
   }
 
   declare export type IncomingHttpHeaders = {
+    ':path': string,
     [key: string]: any,
   }
 }

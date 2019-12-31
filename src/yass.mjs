@@ -38,6 +38,11 @@ type Http2Response = {
   sendError: (error: Http2Error) => void,
 }
 
+type YassOptions = {
+  rootDir: string | URL,
+  timeout?: number
+}
+
 /**
  * Yet another simple server.
  *
@@ -56,15 +61,22 @@ export default class Yass {
   /**
    * Creates instance of Yass with specific options.
    * Only secure instance is possible to create, because *unencrypted HTTP/2* isn't recommended to use.
-   * @param {string | URL} rootUrl path to project root folder.
+   * @param {string | URL} rootDir path to project root folder.
    * As the `url` need to be provided path to project root folder. This is can
    * be done by `import.meta.url`, that contains the absolute *file: URL* of
    * the module. By default project root is empty. You must provide it. Each
    * *Yass* instance have their own project root path.
    */
-  constructor(options: SecureServerOptions, rootUrl: string | URL) {
-    this.#server = http2.createSecureServer(options)
-    this.#rootProjectFolder = currentDirPath(rootUrl)
+  constructor(certs: SecureServerOptions, options: YassOptions) {
+    this.#server = http2.createSecureServer(certs)
+
+    const { rootDir, timeout = 120000 } = options
+
+    this.#rootProjectFolder = currentDirPath(rootDir)
+
+    if (timeout) {
+      this.#server.setTimeout(timeout)
+    }
   }
 
   /**

@@ -162,11 +162,12 @@ function sendFile(
 
 /**
  * Send raw data to client.
- * @param {import('http2').ServerHttp2Stream} stream stream
- * @param {Buffer} buffer
- * @param {import('http2').OutgoingHttpHeaders} [headers]
  */
-function sendData(stream: ServerHttp2Stream, buffer: Buffer, headers?: OutgoingHttpHeaders = {}) {
+function sendData(
+  stream: ServerHttp2Stream,
+  buffer: Buffer,
+  headers?: OutgoingHttpHeaders = {}
+) {
   const responseHeaders = {
     'content-length': buffer.length,
     'content-type': 'application/json',
@@ -185,7 +186,10 @@ function sendData(stream: ServerHttp2Stream, buffer: Buffer, headers?: OutgoingH
  * @param {String} [options.data] - data that need to be sent over network. For *file* type it needs to be the file or directory name. For *headers* type it need to be `null` or `undefined`. For *data* type ?.
  * @param {import('http2').OutgoingHttpHeaders} [options.headers] - if not provided default value is `{ ':path': '/' }`
  */
-function push(stream: ServerHttp2Stream, { type, data, headers = { ':path': '/' } }: SendOptions) {
+function push(
+  stream: ServerHttp2Stream,
+  { type, data, headers = { ':path': '/' } }: SendOptions
+) {
   stream.pushStream(headers, (error, pushStream, outHeaders) => {
     if (error) {
       sendError(stream, {
