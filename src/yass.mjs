@@ -26,6 +26,18 @@ type Http2SecureServerEventType =
   | 'timeout'
   | 'unknownProtocol'
 
+type Http2Request = {
+  stream: ServerHttp2Stream,
+  headers: IncomingHttpHeaders,
+  flags: number,
+  rawHeaders: string[],
+}
+
+type Http2Response = {
+  send: (options: SendOptions) => void,
+  sendError: (error: Http2Error) => void,
+}
+
 /**
  * Yet another simple server.
  *
@@ -62,18 +74,36 @@ export default class Yass {
     this.#server.on(eventType, listener)
   }
 
-  /**
-   * Listens on new stream in current session is created.
-   */
-  onStream(
-    listener: (
-      stream: ServerHttp2Stream,
-      headers: IncomingHttpHeaders,
-      flags: number,
-      rawHeaders: string[]
-    ) => void
-  ) {
-    this._on('stream', listener)
+  onRequest(fn: (request: Http2Request, response: Http2Response) => void) {
+    const root = this.#rootProjectFolder
+
+    this._on('stream', (stream, headers, flags, rawHeaders) => {
+      fn(
+        {
+          stream,
+          headers,
+          flags,
+          rawHeaders,
+        },
+        {
+          send(options) {
+            const { type, data } = options
+            if (type === 'file') {
+              if (typeof data === 'string') {
+                options.data = path.resolve(
+                  root,
+                  data.startsWith('/') ? data.slice(1) : data
+                )
+              }
+            }
+            send(stream, options)
+          },
+          sendError(error) {
+            sendError(stream, error)
+          },
+        }
+      )
+    })
   }
 
   /**
@@ -116,34 +146,6 @@ export default class Yass {
    */
   setTimeout(milliseconds?: number = 120000, callback?: () => void) {
     this.#server.setTimeout(milliseconds, callback)
-  }
-
-  /**
-   * Sends data to client over stream.
-   * @param {import('http2').ServerHttp2Stream} stream - stream that transfer response to client.
-   * @param {Object} options - object that contains data that need to be sent to client.
-   * @param {'data'|'file'|'headers'} options.type - type of data that need to be sent. If value is `data` or `file` *options.data* need to be provided. Otherwise *options.header* must be present.
-   * @param {String|Number[]|{ [key: string]: object }} [options.data] - data that need to be sent over network. For *file* type it needs to be the path to the file or directory (type `String`) from project root. For *headers* type it need to be `null` or `undefined`. For *data* type it expects to be array of octets or object, or string.
-   * @param {import('http2').OutgoingHttpHeaders} [options.headers] - headers that will be set to response.
-   */
-  send(stream: ServerHttp2Stream, options: SendOptions) {
-    const { type, data } = options
-    if (type === 'file') {
-      if (typeof data === 'string') {
-        options.data = path.resolve(
-          this.#rootProjectFolder,
-          data.startsWith('/') ? data.slice(1) : data
-        )
-      }
-    }
-    send(stream, options)
-  }
-
-  /**
-   * Sends error to client and close stream.
-   */
-  sendError(stream: ServerHttp2Stream, error: Http2Error) {
-    sendError(stream, error)
   }
 
   /**
