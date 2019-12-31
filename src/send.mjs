@@ -1,31 +1,55 @@
+// @flow
+
 import path from 'path'
 import fs from 'fs'
 import mime from 'mime'
 
 import { isDir } from './helpers.mjs'
 
+import type { OutgoingHttpHeaders, ServerHttp2Stream } from 'http2'
+
+export type SendOptions = {
+  type: 'data' | 'file' | 'headers',
+  data?: string | number[] | { [key: string]: any },
+  headers?: OutgoingHttpHeaders,
+}
+
+export type Http2Error = {
+  status: number,
+  reason?: string,
+  error?: Error,
+}
+
 /**
  * Sends data to client over stream.
  * @param {import('http2').ServerHttp2Stream} stream - stream that transfer response to client.
  * @param {Object} options - object that contains data that need to be sent to client.
  * @param {'data'|'file'|'headers'} options.type - type of data that need to be sent. If value is `data` or `file` *options.data* need to be provided. Otherwise *options.header* must be present.
- * @param {String|Number[]|{ [key: string]: object }} [options.data] - data that need to be sent over network. For *file* type it needs to be the file or directory name (type `String`). For *headers* type it need to be `null` or `undefined`. For *data* type it expects to be array of octets or object, or string.
- * @param {import('http2').OutgoingHttpHeaders} [options.headers] - headers that will be set to response.
+ * @param {String|Number[]|{ [key: String]: object }} [options.data] - data that need to be sent over network. For *file* type it needs to be the file or directory name (type `String`). For *headers* type it need to be `null` or `undefined`. For *data* type it expects to be array of octets or object, or string.
+ * @param {import('http2').OutgoingHttpHeaders} [options.headers] - headers  that will be set to response.
  */
-export default function send(stream, options) {
+export default function send(stream: ServerHttp2Stream, options: SendOptions) {
   switch (options.type) {
     case 'data':
-      if (options.data && Array.isArray(options.data) && typeof options.data[0] !== 'number') {
+      if (
+        options.data &&
+        Array.isArray(options.data) &&
+        typeof options.data[0] !== 'number'
+      ) {
         sendError(stream, {
           status: 406,
-          reason: `Type of data must be array of octets, object or string, but received Array of ${typeof options.data[0]}`
+          reason: `Type of data must be array of octets, object or string, but received Array of ${typeof options
+            .data[0]}`,
         })
+      } else {
+        const body =
+          typeof options.data !== 'string'
+            ? JSON.stringify(options.data)
+            : options.data
+        const buffer = Buffer.from(body || '')
+        sendData(stream, buffer, options.headers)
       }
-      const body = typeof options.data !== 'string'
-        ? JSON.stringify(options.data)
-        : options.data
-      const buffer = Buffer.from(body)
-      sendData(stream, buffer, options.headers)
+
       break
     case 'file':
       if (options.data) {
@@ -34,13 +58,14 @@ export default function send(stream, options) {
         } else {
           sendError(stream, {
             status: 406,
-            reason: `To send file you must provide path to this file. Expect path (type - String), but received ${typeof options.data}`
+            reason: `To send file you must provide path to this file. Expect path (type - String), but received ${typeof options.data}`,
           })
         }
       } else {
         sendError(stream, {
           status: 404,
-          reason: `No data is provided about file or directory: ${options.data}`
+          reason: `No data is provided about file or directory: ${options.data ||
+            ''}`,
         })
       }
       break
@@ -51,14 +76,15 @@ export default function send(stream, options) {
 
 /**
  * Sends error to client and close stream.
- * @param {import('http2').ServerHttp2Stream} stream
- * @param {{ status: Number, reason?: String, error?: Error }} error
  */
-export function sendError(stream, error) {
+export function sendError(stream: ServerHttp2Stream, error: Http2Error) {
   stream.respond({
-    ':status': error.status
+    ':status': error.status,
   })
-  const payload = (error.reason || error.error) ? { reason: error.reason, error: error.error } : undefined // TODO: make precise assertion.
+  const payload =
+    error.reason || error.error
+      ? { reason: error.reason, error: error.error }
+      : undefined // TODO: make precise assertion.
   stream.end(payload)
 }
 
@@ -69,28 +95,35 @@ export function sendError(stream, error) {
  * @param {import('http2').OutgoingHttpHeaders} [headers]
  * @throws {TypeError} if *fileOrDir* is not a string.
  */
-function sendFile(stream, fileOrDir, headers = {}) {
+function sendFile(
+  stream: ServerHttp2Stream,
+  fileOrDir: string,
+  headers?: OutgoingHttpHeaders = {}
+) {
   if (typeof fileOrDir !== 'string') {
-    throw new TypeError(`Type of [fileOrDir] parameter must be String, but given ${typeof fileOrDir}`)
+    throw new TypeError(
+      `Type of [fileOrDir] parameter must be String, but given ${typeof fileOrDir}`
+    )
   }
 
   if (isDir(fileOrDir)) {
     const files = fs.readdirSync(fileOrDir) // resolves path himself
 
-    files.forEach((file) => {
+    files.forEach(file => {
       const pathToFile = path.normalize(`${fileOrDir}/${file}`)
       const stat = fs.statSync(pathToFile)
       const defaultHeaders = {
         'content-length': stat.size,
         'last-modified': stat.mtime.toUTCString(),
         'content-type': mime.getType(pathToFile),
-        ...headers
+        // $FlowFixMe
+        ...headers,
       }
       if (file !== 'index.html') {
         push(stream, {
           type: 'file',
           data: pathToFile,
-          headers: defaultHeaders
+          headers: defaultHeaders,
         })
       }
     })
@@ -102,7 +135,8 @@ function sendFile(stream, fileOrDir, headers = {}) {
       'content-length': stat.size,
       'last-modified': stat.mtime.toUTCString(),
       'content-type': mime.getType(fileOrDir),
-      ...headers
+      // $FlowFixMe
+      ...headers,
     }
 
     const isFileExists = fs.existsSync(fileOrDir)
@@ -112,15 +146,15 @@ function sendFile(stream, fileOrDir, headers = {}) {
         onError(error) {
           sendError(stream, {
             status: 500,
-            reason: `An error occurred while sending file to client.`,
-            error
+            reason: 'An error occurred while sending file to client.',
+            error,
           })
-        }
+        },
       })
     } else {
       sendError(stream, {
         status: 404,
-        reason: `File: ${fileOrDir} not found.`
+        reason: `File: ${fileOrDir} not found.`,
       })
     }
   }
@@ -132,11 +166,12 @@ function sendFile(stream, fileOrDir, headers = {}) {
  * @param {Buffer} buffer
  * @param {import('http2').OutgoingHttpHeaders} [headers]
  */
-function sendData(stream, buffer, headers) {
+function sendData(stream: ServerHttp2Stream, buffer: Buffer, headers?: OutgoingHttpHeaders = {}) {
   const responseHeaders = {
     'content-length': buffer.length,
     'content-type': 'application/json',
-    ...headers
+    // $FlowFixMe
+    ...headers,
   }
   stream.additionalHeaders(responseHeaders)
   stream.end(JSON.stringify(buffer))
@@ -150,27 +185,24 @@ function sendData(stream, buffer, headers) {
  * @param {String} [options.data] - data that need to be sent over network. For *file* type it needs to be the file or directory name. For *headers* type it need to be `null` or `undefined`. For *data* type ?.
  * @param {import('http2').OutgoingHttpHeaders} [options.headers] - if not provided default value is `{ ':path': '/' }`
  */
-function push(stream, {
-  type,
-  data,
-  headers = { ':path': '/' }
-}) {
+function push(stream: ServerHttp2Stream, { type, data, headers = { ':path': '/' } }: SendOptions) {
   stream.pushStream(headers, (error, pushStream, outHeaders) => {
     if (error) {
       sendError(stream, {
         status: 400,
-        error
+        error,
       })
-    } else if (isDir(data)) {
+    } else if (typeof data === 'string' && isDir(data)) {
       sendError(stream, {
         status: 403,
-        reason: 'Creating pushStream inside pushStream is forbidden. You are trying to send multiple files inside pushStream.'
+        reason:
+          'Creating pushStream inside pushStream is forbidden. You are trying to send multiple files inside pushStream.',
       })
     }
     send(pushStream, {
       type,
       data,
-      headers: outHeaders
+      headers: outHeaders,
     })
   })
 }

@@ -1,22 +1,20 @@
+// @flow
+
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
 /**
  * Check if [fileOrDir] is directory.
- * @param {String} pathName
- * @returns {Boolean}
  */
-export function isDir(pathName) {
+export function isDir(pathName: string): boolean {
   return fs.statSync(pathName).isDirectory()
 }
 
 /**
  * Find absolute path to directory.
- * @param {String|URL} url to the file.
- * @returns {String} absolute path to directory.
  */
-export function currentDirPath(url) {
+export function currentDirPath(url: string | URL): string {
   return dirname(currentFilePath(url))
 }
 
@@ -25,6 +23,7 @@ export function currentDirPath(url) {
  * @param {String|URL} url of the file.
  * @returns {String} absolute path to file.
  */
-export function currentFilePath(url) {
+export function currentFilePath(url: string | URL): string {
+  // $FlowFixMe
   return fileURLToPath(url)
 }
