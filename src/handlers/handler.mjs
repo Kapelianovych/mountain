@@ -30,7 +30,13 @@ export default class Handler {
       if (route) {
         route.handle(request, response)
       } else {
-        console.warn(`No route that match specified path: ${path}`)
+        const notFoundRoute = this.#routes.find(route => route.isForNotFound)
+
+        if (notFoundRoute) {
+          notFoundRoute.handle(request, response)
+        } else {
+          console.warn(`No route that match specified path: ${path}`)
+        }
       }
     }
   }
