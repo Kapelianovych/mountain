@@ -166,7 +166,7 @@ export default class Server {
   /**
    * Start listen for connections.
    */
-  listen(port: number, host?: string = 'localhost', listener?: () => void) {
+  listen(port: number, host: ?string = 'localhost', listener?: () => void) {
     this.#server.listen(port, host, listener)
   }
 
