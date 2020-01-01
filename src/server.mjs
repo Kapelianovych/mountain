@@ -26,21 +26,21 @@ type Http2SecureServerEventType =
   | 'timeout'
   | 'unknownProtocol'
 
-type Http2Request = {
+export type Http2Request = {
   stream: ServerHttp2Stream,
   headers: IncomingHttpHeaders,
   flags: number,
   rawHeaders: string[],
 }
 
-type Http2Response = {
+export type Http2Response = {
   send: (options: SendOptions) => void,
   sendError: (error: Http2Error) => void,
 }
 
-type YassOptions = {
+type ServerOptions = {
   rootDir: string | URL,
-  timeout?: number
+  timeout?: number,
 }
 
 /**
@@ -49,7 +49,7 @@ type YassOptions = {
  * Works on top of **HTTP/2** protocol.
  * More about *HTTP/2* and how it works at [Google developers](https://developers.google.com/web/fundamentals/performance/http2).
  */
-export default class Yass {
+export default class Server {
   /**
    * Holds absolute path to project root folder.
    */
@@ -59,15 +59,15 @@ export default class Yass {
   #server
 
   /**
-   * Creates instance of Yass with specific options.
+   * Creates instance of Yas with specific options.
    * Only secure instance is possible to create, because *unencrypted HTTP/2* isn't recommended to use.
    * @param {string | URL} rootDir path to project root folder.
    * As the `url` need to be provided path to project root folder. This is can
    * be done by `import.meta.url`, that contains the absolute *file: URL* of
    * the module. By default project root is empty. You must provide it. Each
-   * *Yass* instance have their own project root path.
+   * *Yas* instance have their own project root path.
    */
-  constructor(certs: SecureServerOptions, options: YassOptions) {
+  constructor(certs: SecureServerOptions, options: ServerOptions) {
     this.#server = http2.createSecureServer(certs)
 
     const { rootDir, timeout = 120000 } = options
@@ -156,8 +156,11 @@ export default class Yass {
    * In case of no `callback` function were assigned, a new
    * **ERR_INVALID_CALLBACK** error will be thrown.
    */
-  setTimeout(milliseconds?: number = 120000, callback?: () => void) {
-    this.#server.setTimeout(milliseconds, callback)
+  setTimeout(
+    milliseconds?: number = 120000,
+    callback?: () => void
+  ): Http2SecureServer {
+    return this.#server.setTimeout(milliseconds, callback)
   }
 
   /**

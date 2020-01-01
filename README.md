@@ -1,11 +1,13 @@
-# Yass - HTTP/2-ready server
+# Server - HTTP/2-ready server
 
 This library is written and designed as set of ES modules.
+
+**HTTP/2** was introduced in NodeJS **8.4.0**.
 
 In order to use this library, you must install Node **13.4.0** and above. Or NodeJS from **10** up to **13.4.0** version and provide _--experimental-modules_ flag.
 
 ```javascript
-import Yass from 'yass'
+import { Server } from 'edelweiss'
 ```
 
 It is wrapper under _HTTP/2_ module of `NodeJS`.
@@ -19,9 +21,9 @@ The standardization effort was supported by Chrome, Opera, Firefox, Internet Exp
 As browsers support only encrypted _HTTP/2_ connection and this is desirable for all clients, so only secure server can be created. For this you must provide key and certificate.
 
 ```javascript
-import Yass from 'yass'
+import { Server } from 'edelweiss'
 
-const server = new Yass(
+const server = new Server(
   {
     key: 'path/to/key.pem',
     cert: 'path/to/cert.pem',

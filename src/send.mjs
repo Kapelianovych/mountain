@@ -79,7 +79,7 @@ export default function send(stream: ServerHttp2Stream, options: SendOptions) {
  */
 export function sendError(stream: ServerHttp2Stream, error: Http2Error) {
   stream.respond({
-    ':status': error.status,
+    ':status': `${error.status}`,
   })
   const payload =
     error.reason || error.error

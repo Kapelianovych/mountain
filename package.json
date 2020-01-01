@@ -1,8 +1,8 @@
 {
-  "name": "yass",
+  "name": "mountain",
   "version": "0.0.4",
-  "description": "Yet another simple server. For creating HTTP/2 servers.",
-  "main": "./dist/yass.mjs",
+  "description": "Yet another server and client. For creating HTTP/2 servers and clients.",
+  "main": "./dist/index.mjs",
   "type": "module",
   "scripts": {
     "clean": "rm -rf dist/",
@@ -10,6 +10,7 @@
   },
   "keywords": [
     "Server",
+    "Client",
     "HTTP/2"
   ],
   "author": "Kapelianovych Yevhen",
