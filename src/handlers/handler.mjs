@@ -1,6 +1,7 @@
 // @flow
 
 import Route from './route.mjs'
+import { sendError } from '../send.mjs'
 
 import type { Http2Request, Http2Response } from '../server.mjs'
 
@@ -35,7 +36,10 @@ export default class Handler {
         if (notFoundRoute) {
           notFoundRoute.handle(request, response)
         } else {
-          console.warn(`No route that match specified path: ${path}`)
+          sendError(request.stream, {
+            status: 404,
+            reason: `No route that match specified path: ${path}`
+          })
         }
       }
     }
