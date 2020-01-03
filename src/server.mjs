@@ -86,7 +86,9 @@ export default class Server {
     this.#server.on(eventType, listener)
   }
 
-  onRequest(fn: (request: Http2Request, response: Http2Response) => void) {
+  onRequest(
+    fn: (request: Http2Request, response: Http2Response) => void
+  ): void {
     const root = this.#rootProjectFolder
 
     this._on('stream', (stream, headers, flags, rawHeaders) => {

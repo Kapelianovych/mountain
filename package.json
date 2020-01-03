@@ -5,7 +5,7 @@
   "main": "./dist/index.mjs",
   "type": "module",
   "scripts": {
-    "clean": "rm -rf dist/",
+    "clean": "rm -r dist/",
     "build": "npm run clean; ./node_modules/.bin/flow-remove-types src/ -d dist/"
   },
   "keywords": [
