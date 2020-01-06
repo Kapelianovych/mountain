@@ -4,6 +4,10 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
+export function fileOrDirExists(path: string): boolean {
+  return fs.existsSync(path)
+}
+
 /**
  * Check if [fileOrDir] is directory.
  */

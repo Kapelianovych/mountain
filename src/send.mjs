@@ -4,7 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import mime from 'mime'
 
-import { isDir } from './helpers.mjs'
+import { isDir, fileOrDirExists } from './helpers.mjs'
 
 import type { OutgoingHttpHeaders, ServerHttp2Stream } from 'http2'
 
@@ -78,14 +78,26 @@ export default function send(stream: ServerHttp2Stream, options: SendOptions) {
  * Sends error to client and close stream.
  */
 export function sendError(stream: ServerHttp2Stream, error: Http2Error) {
-  stream.respond({
-    ':status': `${error.status}`,
-  })
   const payload =
     error.reason || error.error
       ? { reason: error.reason, error: error.error }
       : undefined // TODO: make precise assertion.
-  stream.end(payload)
+  const stringifiedPayload = JSON.stringify(payload)
+
+  const responseHeaders = {
+    ':status': `${error.status}`,
+    'content-type': stringifiedPayload ? 'application/json' : undefined,
+    'content-length': stringifiedPayload
+      ? `${stringifiedPayload.length}`
+      : undefined,
+  }
+
+  if (stringifiedPayload) {
+    stream.respond(responseHeaders)
+    stream.end(stringifiedPayload)
+  } else {
+    stream.respond(responseHeaders, { endStream: true })
+  }
 }
 
 /**
@@ -106,42 +118,40 @@ function sendFile(
     )
   }
 
-  if (isDir(fileOrDir)) {
-    const files = fs.readdirSync(fileOrDir) // resolves path himself
+  if (fileOrDirExists(fileOrDir)) {
+    if (isDir(fileOrDir)) {
+      const files = fs.readdirSync(fileOrDir) // resolves path himself
 
-    files.forEach(file => {
-      const pathToFile = path.normalize(`${fileOrDir}/${file}`)
-      const stat = fs.statSync(pathToFile)
+      files.forEach(file => {
+        const pathToFile = path.normalize(`${fileOrDir}/${file}`)
+        const stat = fs.statSync(pathToFile)
+        const defaultHeaders = {
+          'content-length': stat.size,
+          'last-modified': stat.mtime.toUTCString(),
+          'content-type': mime.getType(pathToFile),
+          // $FlowFixMe
+          ...headers,
+        }
+        if (file !== 'index.html') {
+          push(stream, {
+            type: 'file',
+            data: pathToFile,
+            headers: defaultHeaders,
+          })
+        }
+      })
+
+      stream.close()
+    } else {
+      const stat = fs.statSync(fileOrDir)
       const defaultHeaders = {
         'content-length': stat.size,
         'last-modified': stat.mtime.toUTCString(),
-        'content-type': mime.getType(pathToFile),
+        'content-type': mime.getType(fileOrDir),
         // $FlowFixMe
         ...headers,
       }
-      if (file !== 'index.html') {
-        push(stream, {
-          type: 'file',
-          data: pathToFile,
-          headers: defaultHeaders,
-        })
-      }
-    })
 
-    stream.close()
-  } else {
-    const stat = fs.statSync(fileOrDir)
-    const defaultHeaders = {
-      'content-length': stat.size,
-      'last-modified': stat.mtime.toUTCString(),
-      'content-type': mime.getType(fileOrDir),
-      // $FlowFixMe
-      ...headers,
-    }
-
-    const isFileExists = fs.existsSync(fileOrDir)
-
-    if (isFileExists) {
       stream.respondWithFile(fileOrDir, defaultHeaders, {
         onError(error) {
           sendError(stream, {
@@ -151,12 +161,12 @@ function sendFile(
           })
         },
       })
-    } else {
-      sendError(stream, {
-        status: 404,
-        reason: `File: ${fileOrDir} not found.`,
-      })
     }
+  } else {
+    sendError(stream, {
+      status: 404,
+      reason: `File or directory: "${fileOrDir}" not found.`,
+    })
   }
 }
 
