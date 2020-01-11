@@ -1,4 +1,4 @@
-# Server - HTTP/2-ready server
+# Mountain - HTTP/2-ready server and client (in future)
 
 This library is written and designed as set of ES modules.
 
@@ -7,7 +7,7 @@ This library is written and designed as set of ES modules.
 In order to use this library, you must install Node **13.4.0** and above. Or NodeJS from **10** up to **13.4.0** version and provide _--experimental-modules_ flag.
 
 ```javascript
-import { Server } from 'edelweiss'
+import { Server } from 'mountain'
 ```
 
 It is wrapper under _HTTP/2_ module of `NodeJS`.
@@ -18,36 +18,43 @@ The standardization effort was supported by Chrome, Opera, Firefox, Internet Exp
 
 ## API
 
+### Server
+
 As browsers support only encrypted _HTTP/2_ connection and this is desirable for all clients, so only secure server can be created. For this you must provide key and certificate.
 
 ```javascript
-import { Server } from 'edelweiss'
+import { Server } from 'mountain'
 
 const server = new Server(
   {
     key: 'path/to/key.pem',
     cert: 'path/to/cert.pem',
   },
-  import.meta.url
-) // Second parameter defines package root. In this example current directory is used as root folder.
+  {
+    rootDir: import.meta.url, // This parameter defines package root. In this example current directory in which this file is located is used as root folder.
+    timeout: 1000 // optional: defines timeout that server will before ending connection.
+  }
+)
 ```
 
-Methods of the instance of _Yass_ class:
+Methods of the instance of _Server_ class:
 
-- `onStream` with four parameters: _stream_ - Duplex stream that opened when connection is established, _headers_ - compressed headers of each request, _flags_ and _rawHeaders_.
+- `onRequest`:
 
   ```javascript
-  // onStream is the main method. All information comes from `stream` and writes to it.
-  server.onStream((stream, headers, flags, rawHeaders) => {
-    const path = headers[':path']
+  // onRequest is the main method.
+  server.onRequest((request: Http2Request, response: Http2Response) => {
+    const path = request.headers[':path']
     // some other code here
   })
   ```
 
-- `send` sends response to `stream` (parameter above). Takes 3 parameters:
-  1. _stream_ by which response will be sent to client.
-  2. _options_ - object that contains:
-     _type_ field for clarifying what kind of data will be sent (may be **data**, **file** or **headers**).
-     _data_ -
+  > Type **Http2Request** contains `headers` object, `stream`, `flags` and `rawHeaders`.
+
+  Usually you will not need `stream`, `flags` and `rawHeaders` properties.
+
+  > Type **Http2Response** contains `send` and `sendError` methods.
+
+  - `sendError` sends
 
 It is licensed under [MIT-style license](LICENSE).

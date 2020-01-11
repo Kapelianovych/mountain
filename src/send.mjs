@@ -6,12 +6,12 @@ import mime from 'mime'
 
 import { isDir, fileOrDirExists } from './helpers.mjs'
 
-import type { OutgoingHttpHeaders, ServerHttp2Stream } from 'http2'
+import type { Http2Headers, ServerHttp2Stream } from 'http2'
 
 export type SendOptions = {
   type: 'data' | 'file' | 'headers',
   data?: string | number[] | { [key: string]: any },
-  headers?: OutgoingHttpHeaders,
+  headers?: Http2Headers,
 }
 
 export type Http2Error = {
@@ -104,13 +104,13 @@ export function sendError(stream: ServerHttp2Stream, error: Http2Error) {
  * Sends file over network and close stream.
  * @param {import('http2').ServerHttp2Stream} stream
  * @param {String} fileOrDir - name of the file that need to be sent or directory in which all files need to be sent.
- * @param {import('http2').OutgoingHttpHeaders} [headers]
+ * @param {import('http2').Http2Headers} [headers]
  * @throws {TypeError} if *fileOrDir* is not a string.
  */
 function sendFile(
   stream: ServerHttp2Stream,
   fileOrDir: string,
-  headers?: OutgoingHttpHeaders = {}
+  headers?: Http2Headers = {}
 ) {
   if (typeof fileOrDir !== 'string') {
     throw new TypeError(
@@ -176,7 +176,7 @@ function sendFile(
 function sendData(
   stream: ServerHttp2Stream,
   buffer: Buffer,
-  headers?: OutgoingHttpHeaders = {}
+  headers?: Http2Headers = {}
 ) {
   const responseHeaders = {
     'content-length': buffer.length,
@@ -185,7 +185,7 @@ function sendData(
     ...headers,
   }
   stream.additionalHeaders(responseHeaders)
-  stream.end(JSON.stringify(buffer))
+  stream.end(JSON.stringify(buffer.toJSON()))
 }
 
 /**
@@ -194,7 +194,7 @@ function sendData(
  * @param {Object} options
  * @param {'data'|'file'|'headers'} options.type - type of data that need to be sent.
  * @param {String} [options.data] - data that need to be sent over network. For *file* type it needs to be the file or directory name. For *headers* type it need to be `null` or `undefined`. For *data* type ?.
- * @param {import('http2').OutgoingHttpHeaders} [options.headers] - if not provided default value is `{ ':path': '/' }`
+ * @param {import('http2').Http2Headers} [options.headers] - if not provided default value is `{ ':path': '/' }`
  */
 function push(
   stream: ServerHttp2Stream,

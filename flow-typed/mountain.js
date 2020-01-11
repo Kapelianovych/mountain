@@ -1,7 +1,19 @@
 // @flow
 
 declare module 'mountain' {
-  import type { SecureServerOptions } from 'http2'
+  import type { Http2Headers, SecureServerOptions } from 'http2'
+
+  declare export type SendOptions = {
+    type: 'data' | 'file' | 'headers',
+    data?: string | number[] | { [key: string]: any },
+    headers?: Http2Headers,
+  }
+
+  declare export type Http2Error = {
+    status: number,
+    reason?: string,
+    error?: Error,
+  }
 
   declare type Http2SecureServerEventType =
     | 'checkContinue'
@@ -14,7 +26,7 @@ declare module 'mountain' {
 
   declare type Http2Request = {
     stream: ServerHttp2Stream,
-    headers: IncomingHttpHeaders,
+    headers: Http2Headers,
     flags: number,
     rawHeaders: string[],
   }
@@ -62,7 +74,7 @@ declare module 'mountain' {
     onTimeout(listener: () => void): void;
     onUnknownProtocol(listener: (socket: Socket) => void): void;
     onError(listener: (error: Error) => void): void;
-    setTimeout(milliseconds?: number, callback?: () => void): Http2SecureServer;
+    setTimeout(milliseconds?: number, callback?: () => void): void;
     listen(port: number, host: ?string, listener?: () => void): void;
     close(callback?: () => void): void;
   }

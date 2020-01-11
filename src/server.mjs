@@ -161,8 +161,8 @@ export default class Server {
   setTimeout(
     milliseconds?: number = 120000,
     callback?: () => void
-  ): Http2SecureServer {
-    return this.#server.setTimeout(milliseconds, callback)
+  ): void {
+    this.#server.setTimeout(milliseconds, callback)
   }
 
   /**
