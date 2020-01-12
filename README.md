@@ -55,6 +55,18 @@ Methods of the instance of _Server_ class:
 
   > Type **Http2Response** contains `send` and `sendError` methods.
 
-  - `sendError` sends
+  - `sendError` sends error object to the client:
+
+    ```javascript
+    server.onRequest((request: Http2Request, response: Http2Response) => {
+        const { sendError } = response
+
+        sendError({
+          status: 500,
+          reason: 'Some meaningful reason', // optional
+          error: Error // optional: raw Error object.
+        })
+      })
+    ```
 
 It is licensed under [MIT-style license](LICENSE).
