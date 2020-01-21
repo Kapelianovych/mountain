@@ -1,5 +1,3 @@
-// @flow
-
 import EventEmitter from 'events'
 import net from 'net'
 import tls from 'tls'

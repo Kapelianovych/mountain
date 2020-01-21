@@ -3,7 +3,7 @@
 .idea/
 src/
 flow-typed/
-tests/
+test/
 
 .eslintignore
 .eslintrc.json

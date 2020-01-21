@@ -69,4 +69,180 @@ Methods of the instance of _Server_ class:
       })
     ```
 
+  - `send` send data (*file*, *binary* data or *headers*) to client:
+    Method accept object that must have **type** property that may have one of three
+    values - `'data' | 'file' | 'headers'`.
+
+    If **type** is `headers`, then you must provide second property *headers*:
+
+    ```javascript
+    server.onRequest((request: Http2Request, response: Http2Response) => {
+        const { send } = response
+
+        send({
+          type: 'headers',
+          headers: {
+            ':status': 200
+          }
+        })
+      })
+    ```
+
+    If **type** is `data`, then you must provide second property *data*:
+
+    ```javascript
+    server.onRequest((request: Http2Request, response: Http2Response) => {
+        const { send } = response
+
+        send({
+          type: 'data',
+          data: [/* array of octets, object or string */]
+          }
+        })
+      })
+    ```
+
+    If **type** is `file`, then you must provide second property *data*, that contains path to file or dir.
+    If *data* contains path to dir, then all files of this directory will be sent to client:
+
+    ```javascript
+    server.onRequest((request: Http2Request, response: Http2Response) => {
+        const { send } = response
+
+        send({
+          type: 'file',
+          data: '/static'
+        })
+      })
+    ```
+
+- `onSessionCreated`:
+
+  Listens to new sessions establishes.
+
+  ```javascript
+    server.onSessionCreated((session: ServerHttp2Session) => {
+      // Do some useful work
+    })
+  ```
+
+- `onTimeout`:
+
+  Listens on *timeout* event if there is no activity on the **Http2Session** after the configured number of milliseconds.
+
+  ```javascript
+    server.onTimeout(() => {
+      // Do some useful work
+    })
+  ```
+
+- `onUnknownProtocol`:
+
+  Listens on *unknownProtocol* event that is emitted when a connecting client fails to negotiate an allowed 
+  protocol (i.e. HTTP/2 or HTTP/1.1).
+
+  ```javascript
+    server.onUnknownProtocol((socket: Socket) => {
+      // Do some useful work
+    })
+  ```
+
+- `onError`:
+
+  Listens on errors that has been arisen in current session.
+
+  ```javascript
+    server.onError((error: Error) => {
+      // Do some useful work
+    })
+  ```
+
+- `setTimeout`:
+
+  Used to set the timeout value for http2 secure server requests, and sets a
+  callback function that is called when there is no activity on the server
+  after `milliseconds`.
+
+  ```javascript
+    server.setTimeout(
+      milliseconds?: number = 120000,
+      callback?: () => void
+    )
+  ```
+
+- `listen`:
+
+  Start listening for requests.
+
+  ```javascript
+    server.listen(
+      port: number, host: ?string = 'localhost', listener?: () => void
+    )
+  ```
+
+- `close`:
+
+   Stops the server from establishing new sessions. This does not prevent new
+   request streams from being created due to the persistent nature of HTTP/2
+   sessions.
+  
+   If `callback` is provided, it is not invoked until all active sessions have
+   been closed, although the server has already stopped allowing new
+   sessions. See [tls.Server.close()](https://nodejs.org/dist/latest-v12.x/docs/api/tls.html#tls_server_close_callback) for more details.
+
+  ```javascript
+    server.close(callback?: () => void)
+  ```
+
+### Route
+
+You can handle all requests in one function that passed to `onRequest` method or split it by **:path**
+and **:method**.
+
+In order to create handler for specific path and method, create instance of `Route` class with
+needed properties:
+
+```javascript
+const route = new Route({
+  path: string | RegExp,
+  method: string,
+  notFound?: boolean,
+  handle: (request: Http2Request, response: Http2Response) => void,
+})
+```
+
+*notFound* must be provided only in **one!** route. It will be used if request can't be handled by the server.
+If absent route for `/` path will be used.
+
+*handle* method contains code that handle specific request and returns response.
+
+### Handler
+
+If you will have many `Route`s, then it may need to be into one representation.
+This is why `Handler` come. Instance of this class will contains routes and when request is received, it will
+search for proper `Route` instance and executes `Route`s `handler` method.
+
+```javascript
+const route = new Route({
+  path: '/',
+  method: 'get,
+  handle(request, response) {},
+})
+
+const route2 = new Route({
+  path: '/about',
+  method: 'get,
+  handle(request, response) {},
+})
+
+server.onRequest(
+  new Handler([
+    route,
+    route2
+  ]).set()
+)
+```
+
+It has `set` method that return function that need to be placed to `server.onRequest` method.
+
 It is licensed under [MIT-style license](LICENSE).

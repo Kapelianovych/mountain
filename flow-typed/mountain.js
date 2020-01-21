@@ -1,5 +1,3 @@
-// @flow
-
 declare module 'mountain' {
   import type { Http2Headers, SecureServerOptions } from 'http2'
 

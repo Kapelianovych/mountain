@@ -4,6 +4,10 @@
   "description": "Yet another server and client. For creating HTTP/2 servers and clients.",
   "main": "./dist/index.mjs",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YevhenKap/mountain"
+  },
   "scripts": {
     "clean": "rm -r dist/",
     "build": "npm run clean; flow-remove-types --pretty src/ -d dist/"
