@@ -225,13 +225,13 @@ search for proper `Route` instance and executes `Route`s `handler` method.
 ```javascript
 const route = new Route({
   path: '/',
-  method: 'get,
+  method: 'get',
   handle(request, response) {},
 })
 
 const route2 = new Route({
   path: '/about',
-  method: 'get,
+  method: 'get',
   handle(request, response) {},
 })
 
