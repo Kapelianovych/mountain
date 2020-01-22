@@ -7,7 +7,7 @@ This library is written and designed as set of ES modules.
 In order to use this library, you must install Node **13.4.0** and above. Or NodeJS from **10** up to **13.4.0** version and provide _--experimental-modules_ flag.
 
 ```javascript
-import { Server } from 'mountain'
+import { Server } from '@prostory/mountain'
 ```
 
 It is wrapper under _HTTP/2_ module of `NodeJS`.
@@ -23,7 +23,7 @@ The standardization effort was supported by Chrome, Opera, Firefox, Internet Exp
 As browsers support only encrypted _HTTP/2_ connection and this is desirable for all clients, so only secure server can be created. For this you must provide key and certificate.
 
 ```javascript
-import { Server } from 'mountain'
+import { Server } from '@prostory/mountain'
 
 const server = new Server(
   {
@@ -212,7 +212,7 @@ const route = new Route({
 ```
 
 *notFound* must be provided only in **one!** route. It will be used if request can't be handled by the server.
-If absent route for `/` path will be used.
+If route with this property is absent, route for `/` path will be used.
 
 *handle* method contains code that handle specific request and returns response.
 

@@ -129,6 +129,7 @@ function sendFile(
           'content-length': stat.size,
           'last-modified': stat.mtime.toUTCString(),
           'content-type': mime.getType(pathToFile),
+          // $FlowFixMe
           ...headers,
         }
         if (file !== 'index.html') {
@@ -147,6 +148,7 @@ function sendFile(
         'content-length': stat.size,
         'last-modified': stat.mtime.toUTCString(),
         'content-type': mime.getType(fileOrDir),
+        // $FlowFixMe
         ...headers,
       }
 
@@ -179,6 +181,7 @@ function sendData(
   const responseHeaders = {
     'content-length': buffer.length,
     'content-type': 'application/json',
+    // $FlowFixMe
     ...headers,
   }
   stream.additionalHeaders(responseHeaders)

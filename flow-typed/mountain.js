@@ -1,13 +1,13 @@
-declare module 'mountain' {
+declare module '@prostory/mountain' {
   import type { Http2Headers, SecureServerOptions } from 'http2'
 
-  declare export type SendOptions = {
+  declare type SendOptions = {
     type: 'data' | 'file' | 'headers',
     data?: string | number[] | { [key: string]: any },
     headers?: Http2Headers,
   }
 
-  declare export type Http2Error = {
+  declare type Http2Error = {
     status: number,
     reason?: string,
     error?: Error,
