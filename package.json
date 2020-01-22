@@ -1,6 +1,6 @@
 {
   "name": "@prostory/mountain",
-  "version": "0.1.0",
+  "version": "0.1.0+1",
   "description": "Yet another server and client. For creating HTTP/2 servers and clients.",
   "main": "./dist/index.mjs",
   "type": "module",
@@ -11,7 +11,7 @@
   "scripts": {
     "clean": "rm -r dist/",
     "build": "npm run clean; flow-remove-types --pretty src/ -d dist/",
-    "release": "npm publish --access public"
+    "release": "npm run build; npm publish --access public"
   },
   "keywords": [
     "Server",
