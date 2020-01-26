@@ -1,6 +1,6 @@
 {
   "name": "@prostory/mountain",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Yet another server and client. For creating HTTP/2 servers and clients.",
   "main": "./dist/index.mjs",
   "type": "module",
