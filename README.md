@@ -96,7 +96,7 @@ Methods of the instance of _Server_ class:
 
         send({
           type: 'data',
-          data: [/* array of octets, object or string */]
+          data: /* array of octets, object or string */
           }
         })
       })
@@ -212,7 +212,7 @@ const route = new Route({
 ```
 
 *notFound* must be provided only in **one!** route. It will be used if request can't be handled by the server.
-If route with this property is absent, route for `/` path will be used.
+If route with this property is absent, 404 error will be sent to client.
 
 *handle* method contains code that handle specific request and returns response.
 
