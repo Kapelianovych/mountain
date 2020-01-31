@@ -39,5 +39,6 @@ export default class Client {
     this._on('origin', listener)
   }
 
-  request(headers: Http2Headers, options): void {}
+  request(headers: Http2Headers, options: {}): void {
+}
 }

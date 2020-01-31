@@ -10,7 +10,6 @@ import { currentDirPath } from './helpers.mjs'
 
 import type { SendOptions, Http2Error } from './send.mjs'
 import type {
-  SecureServerOptions,
   ServerHttp2Stream,
   IncomingHttpHeaders,
   ServerHttp2Session,
@@ -39,6 +38,8 @@ export type Http2Response = {
 }
 
 type ServerOptions = {
+  cert: Buffer,
+  key: Buffer,
   rootDir: string | URL,
   timeout?: number,
 }
@@ -59,18 +60,39 @@ export default class Server {
   #server
 
   /**
-   * Creates instance of Yas with specific options.
+   * Creates instance of Server with specific options.
    * Only secure instance is possible to create, because *unencrypted HTTP/2* isn't recommended to use.
-   * @param {string | URL} rootDir path to project root folder.
+   * @param {string | URL} rootDir provides path to project root folder.
    * As the `url` need to be provided path to project root folder. This is can
    * be done by `import.meta.url`, that contains the absolute *file: URL* of
    * the module. By default project root is empty. You must provide it. Each
-   * *Yas* instance have their own project root path.
+   * *Server* instance have their own project root path.
+   *
+   * Throws errors if `key`, `cert` or `rootDir` is not defined.
    */
-  constructor(certs: SecureServerOptions, options: ServerOptions) {
-    this.#server = http2.createSecureServer(certs)
+  constructor(options: ServerOptions) {
+    const { key, cert, rootDir, timeout = 120000 } = options
 
-    const { rootDir, timeout = 120000 } = options
+    if (!key) {
+      throw new Error(
+        'Secret key ("key" property of Server\'s constructor options object) must be defined!'
+      )
+    }
+    if (!cert) {
+      throw new Error(
+        'Secret certificate ("cert" property of Server\'s constructor options object) must be defined!'
+      )
+    }
+    if (!rootDir) {
+      throw new Error(
+        'Package root absolute path ("rootDir" property of Server\'s constructor options object) must be defined!'
+      )
+    }
+
+    this.#server = http2.createSecureServer({
+      key,
+      cert,
+    })
 
     this.#rootProjectFolder = currentDirPath(rootDir)
 
@@ -158,10 +180,7 @@ export default class Server {
    * In case of no `callback` function were assigned, a new
    * **ERR_INVALID_CALLBACK** error will be thrown.
    */
-  setTimeout(
-    milliseconds?: number = 120000,
-    callback?: () => void
-  ): void {
+  setTimeout(milliseconds?: number = 120000, callback?: () => void): void {
     this.#server.setTimeout(milliseconds, callback)
   }
 

@@ -25,16 +25,12 @@ As browsers support only encrypted _HTTP/2_ connection and this is desirable for
 ```javascript
 import { Server } from '@prostory/mountain'
 
-const server = new Server(
-  {
-    key: 'path/to/key.pem',
-    cert: 'path/to/cert.pem',
-  },
-  {
-    rootDir: import.meta.url, // This parameter defines package root. In this example current directory in which this file is located is used as root folder.
-    timeout: 1000 // optional: defines timeout that server will before ending connection.
-  }
-)
+const server = new Server({
+  key: 'path/to/key.pem',
+  cert: 'path/to/cert.pem',
+  rootDir: import.meta.url, // This parameter defines package root. In this example current directory in which this file is located is used as root folder.
+  timeout: 1000 // optional: defines timeout that server will before ending connection.
+})
 ```
 
 Methods of the instance of _Server_ class:

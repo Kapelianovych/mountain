@@ -9,3 +9,4 @@ test/
 .eslintrc.json
 .flowconfig
 .prettierrc.json
+gulpfile.js

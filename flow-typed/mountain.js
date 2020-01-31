@@ -35,6 +35,8 @@ declare module '@prostory/mountain' {
   }
 
   declare type ServerOptions = {
+    cert: Buffer,
+    key: Buffer,
     rootDir: string | URL,
     timeout?: number,
   }
@@ -63,7 +65,7 @@ declare module '@prostory/mountain' {
   }
 
   declare export class Server {
-    constructor(certs: SecureServerOptions, options: ServerOptions): Server;
+    constructor(options: ServerOptions): Server;
 
     onRequest(
       fn: (request: Http2Request, response: Http2Response) => void
