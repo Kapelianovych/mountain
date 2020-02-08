@@ -1,4 +1,9 @@
-# 0.1.4
+# 0.1.5
+
+- Minify distribution code.
+- Make small internal changes that do not touch API.
+
+## 0.1.4
 
 - Merge parameters of `Server` constructor.
 - Correct types.

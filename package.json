@@ -1,6 +1,6 @@
 {
   "name": "@prostory/mountain",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Yet another server and client. For creating HTTP/2 servers and clients.",
   "main": "./dist/index.mjs",
   "repository": {
@@ -8,8 +8,8 @@
     "url": "https://github.com/YevhenKap/mountain"
   },
   "scripts": {
-    "clean": "rm -r dist/",
-    "watch": "npm run clean; gulp",
+    "clean": "rm -r dist/*",
+    "watch": "gulp",
     "release": "npm publish --access public"
   },
   "keywords": [
@@ -27,12 +27,13 @@
     "eslint": "^6.8.0",
     "eslint-config-standard": "^14.1.0",
     "eslint-plugin-flowtype": "^4.5.3",
-    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-node": "^11.0.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
     "flow-bin": "^0.117.0",
     "gulp": "^4.0.2",
-    "gulp-flow-remove-types2": "^1.0.0"
+    "gulp-flow-remove-types2": "^1.0.0",
+    "gulp-uglify-es": "^2.0.0"
   }
 }

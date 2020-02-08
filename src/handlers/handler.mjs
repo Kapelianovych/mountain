@@ -1,16 +1,15 @@
 // @flow
 
-import Route from './route.mjs'
 import { sendError } from '../send.mjs'
 
 import type { Http2Request, Http2Response } from '../server.mjs'
+import type Route from './route.mjs'
 
 export default class Handler {
-  /** @type {Route[]} */
-  #routes
+  +_routes: Route[]
 
   constructor(routes: Route[]) {
-    this.#routes = routes
+    this._routes = routes
   }
 
   set(): (request: Http2Request, response: Http2Response) => void {
@@ -18,7 +17,7 @@ export default class Handler {
       const path = request.headers[':path']
       const method = request.headers[':method']
 
-      const route = this.#routes.find(r => {
+      const route = this._routes.find(r => {
         const pathRegExp =
           typeof r.path === 'string' ? new RegExp(`^${r.path}$`) : r.path
 
@@ -31,7 +30,7 @@ export default class Handler {
       if (route) {
         route.handle(request, response)
       } else {
-        const notFoundRoute = this.#routes.find(route => route.isForNotFound)
+        const notFoundRoute = this._routes.find(route => route.isForNotFound)
 
         if (notFoundRoute) {
           notFoundRoute.handle(request, response)

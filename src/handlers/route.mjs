@@ -10,26 +10,25 @@ type RouteOptions = {
 }
 
 export default class Route {
-  /** @type {RouteOptions} */
-  #options
+  +_options: RouteOptions
 
   constructor(options: RouteOptions) {
-    this.#options = options
+    this._options = options
   }
 
   get path() {
-    return this.#options.path
+    return this._options.path
   }
 
   get method() {
-    return this.#options.method
+    return this._options.method
   }
 
   get isForNotFound() {
-    return this.#options.notFound || false
+    return this._options.notFound || false
   }
 
   handle(request: Http2Request, response: Http2Response): void {
-    this.#options.handle(request, response)
+    this._options.handle(request, response)
   }
 }

@@ -14,6 +14,8 @@ import type {
   IncomingHttpHeaders,
   ServerHttp2Session,
 } from 'http2'
+// This is not prover type but maybe Http2Server inherits of them?
+import type { Server as Http2SecureServer } from 'tls'
 
 // Events of *Http2SecureServer* object.
 type Http2SecureServerEventType =
@@ -54,10 +56,10 @@ export default class Server {
   /**
    * Holds absolute path to project root folder.
    */
-  #rootProjectFolder = ''
+  +_rootProjectFolder: string
 
   /** @type {http2.Http2SecureServer} */
-  #server
+  +_server: Http2SecureServer
 
   /**
    * Creates instance of Server with specific options.
@@ -89,15 +91,16 @@ export default class Server {
       )
     }
 
-    this.#server = http2.createSecureServer({
+    this._server = http2.createSecureServer({
       key,
       cert,
     })
 
-    this.#rootProjectFolder = currentDirPath(rootDir)
+    this._rootProjectFolder = currentDirPath(rootDir)
 
     if (timeout) {
-      this.#server.setTimeout(timeout)
+      // $FlowFixMe
+      this._server.setTimeout(timeout)
     }
   }
 
@@ -105,13 +108,13 @@ export default class Server {
    * Add listener to server's events.
    */
   _on(eventType: Http2SecureServerEventType, listener: (...arguments) => void) {
-    this.#server.on(eventType, listener)
+    this._server.on(eventType, listener)
   }
 
   onRequest(
     fn: (request: Http2Request, response: Http2Response) => void
   ): void {
-    const root = this.#rootProjectFolder
+    const root = this._rootProjectFolder
 
     this._on('stream', (stream, headers, flags, rawHeaders) => {
       fn(
@@ -181,14 +184,16 @@ export default class Server {
    * **ERR_INVALID_CALLBACK** error will be thrown.
    */
   setTimeout(milliseconds?: number = 120000, callback?: () => void): void {
-    this.#server.setTimeout(milliseconds, callback)
+    // $FlowFixMe
+    this._server.setTimeout(milliseconds, callback)
   }
 
   /**
    * Start listen for connections.
    */
-  listen(port: number, host: ?string = 'localhost', listener?: () => void) {
-    this.#server.listen(port, host, listener)
+  listen(port: number, host?: string = 'localhost', listener?: () => void) {
+    // $FlowFixMe
+    this._server.listen(port, host, listener)
   }
 
   /**
@@ -201,6 +206,6 @@ export default class Server {
    * sessions. See [tls.Server.close()](https://nodejs.org/dist/latest-v12.x/docs/api/tls.html#tls_server_close_callback) for more details.
    */
   close(callback?: () => void) {
-    this.#server.close(callback)
+    this._server.close(callback)
   }
 }
