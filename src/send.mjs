@@ -126,11 +126,10 @@ function sendFile(
         const pathToFile = path.normalize(`${fileOrDir}/${file}`)
         const stat = fs.statSync(pathToFile)
         const defaultHeaders = {
-          'content-length': stat.size,
+          ...headers,
+          'content-length': `${stat.size}`,
           'last-modified': stat.mtime.toUTCString(),
           'content-type': mime.getType(pathToFile),
-          // $FlowFixMe
-          ...headers,
         }
         if (file !== 'index.html') {
           push(stream, {
@@ -145,11 +144,10 @@ function sendFile(
     } else {
       const stat = fs.statSync(fileOrDir)
       const defaultHeaders = {
-        'content-length': stat.size,
+        ...headers,
+        'content-length': `${stat.size}`,
         'last-modified': stat.mtime.toUTCString(),
         'content-type': mime.getType(fileOrDir),
-        // $FlowFixMe
-        ...headers,
       }
 
       stream.respondWithFile(fileOrDir, defaultHeaders, {

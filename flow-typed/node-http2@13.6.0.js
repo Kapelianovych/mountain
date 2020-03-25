@@ -183,6 +183,14 @@ declare module 'http2' {
       event: 'response',
       callback: (headers: Http2Headers, flags: number) => void
     ): void;
+    on(
+      event: 'data',
+      callback: (chunk: Buffer) => void // Need to be checked
+    ): void;
+    on(
+      event: 'end',
+      callback: () => void
+    ): void;
   }
 
   declare export class ServerHttp2Stream extends Http2Stream {

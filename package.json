@@ -10,7 +10,8 @@
   "scripts": {
     "clean": "rm -r dist/*",
     "watch": "gulp",
-    "release": "npm publish --access public"
+    "build": "npm run clean; gulp minimize",
+    "release": "npm run build; npm publish --access public"
   },
   "keywords": [
     "Server",

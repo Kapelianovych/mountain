@@ -7,7 +7,18 @@ import type { Http2Headers, Http2Settings, ClientHttp2Session } from 'http2'
 export type ClientOptions = {
   url: string,
   maxSessionMemory?: number,
-  settings?: Http2Settings
+  settings?: Http2Settings,
+}
+
+type RequestOptions = {
+  onResponse: (headers: Http2Headers) => void,
+  onData: (chunk: Buffer) => void,
+  onEnd: () => void,
+  endStream?: boolean,
+  exclusive?: boolean,
+  parent?: number,
+  weight?: number,
+  waitForTrailers?: boolean,
 }
 
 type ClientEventType = 'altsvc' | 'origin'
@@ -21,7 +32,7 @@ export default class Client {
 
     this._client = connect(url, {
       maxSessionMemory,
-      settings
+      settings,
     })
   }
 
@@ -32,7 +43,9 @@ export default class Client {
     this._client.on(eventType, listener)
   }
 
-  onAltsvc(listener: (alt: string, origin: string, streamId: number) => void): void {
+  onAltsvc(
+    listener: (alt: string, origin: string, streamId: number) => void
+  ): void {
     this._on('altsvc', listener)
   }
 
@@ -40,5 +53,19 @@ export default class Client {
     this._on('origin', listener)
   }
 
-  request(headers: Http2Headers, options: {}): void {}
+  request(headers: Http2Headers, options: RequestOptions): void {
+    const { endStream, exclusive = false, parent, weight, waitForTrailers = false } = options
+
+    const request = this._client.request(headers, {
+      endStream,
+      exclusive,
+      parent,
+      weight,
+      waitForTrailers,
+    })
+
+    request.on('response', options.onResponse)
+    request.on('data', options.onData)
+    request.on('end', options.onEnd)
+  }
 }
