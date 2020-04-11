@@ -1,13 +1,5 @@
 // @flow
 
-import Server from './server.mjs'
-import Client from './client.mjs'
-import Handler from './handlers/handler.mjs'
-import Route from './handlers/route.mjs'
-
-export {
-  Server,
-  Client,
-  Handler,
-  Route
-}
+export { Server } from './server.mjs'
+export { Client } from './client.mjs'
+export { Router } from './router.mjs'

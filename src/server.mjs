@@ -1,12 +1,9 @@
 // @flow
 
-// $FlowFixMe
-import http2 from 'http2'
-import path from 'path'
+import { createSecureServer } from 'http2'
 import { Socket } from 'net'
 
 import send, { sendError } from './send.mjs'
-import { currentDirPath } from './helpers.mjs'
 
 import type { SendOptions, Http2Error } from './send.mjs'
 import type {
@@ -42,7 +39,6 @@ export type Http2Response = {
 type ServerOptions = {
   cert: Buffer,
   key: Buffer,
-  rootDir: string | URL,
   timeout?: number,
 }
 
@@ -52,28 +48,17 @@ type ServerOptions = {
  * Works on top of **HTTP/2** protocol.
  * More about *HTTP/2* and how it works at [Google developers](https://developers.google.com/web/fundamentals/performance/http2).
  */
-export default class Server {
-  /**
-   * Holds absolute path to project root folder.
-   */
-  +_rootProjectFolder: string
-
+export class Server {
   /** @type {http2.Http2SecureServer} */
-  +_server: Http2SecureServer
+  _server: Http2SecureServer
 
   /**
    * Creates instance of Server with specific options.
    * Only secure instance is possible to create, because *unencrypted HTTP/2* isn't recommended to use.
-   * @param {string | URL} rootDir provides path to project root folder.
-   * As the `url` need to be provided path to project root folder. This is can
-   * be done by `import.meta.url`, that contains the absolute *file: URL* of
-   * the module. By default project root is empty. You must provide it. Each
-   * *Server* instance have their own project root path.
-   *
-   * Throws errors if `key`, `cert` or `rootDir` is not defined.
+   * Throws errors if `key` or `cert` is not defined.
    */
   constructor(options: ServerOptions) {
-    const { key, cert, rootDir, timeout = 120000 } = options
+    const { key, cert, timeout = 120000 } = options
 
     if (!key) {
       throw new Error(
@@ -85,21 +70,13 @@ export default class Server {
         'Secret certificate ("cert" property of Server\'s constructor options object) must be defined!'
       )
     }
-    if (!rootDir) {
-      throw new Error(
-        'Package root absolute path ("rootDir" property of Server\'s constructor options object) must be defined!'
-      )
-    }
 
-    this._server = http2.createSecureServer({
+    this._server = createSecureServer({
       key,
       cert,
     })
 
-    this._rootProjectFolder = currentDirPath(rootDir)
-
     if (timeout) {
-      // $FlowFixMe
       this._server.setTimeout(timeout)
     }
   }
@@ -114,8 +91,6 @@ export default class Server {
   onRequest(
     fn: (request: Http2Request, response: Http2Response) => void
   ): void {
-    const root = this._rootProjectFolder
-
     this._on('stream', (stream, headers, flags, rawHeaders) => {
       fn(
         {
@@ -129,10 +104,7 @@ export default class Server {
             const { type, data } = options
             if (type === 'file') {
               if (typeof data === 'string') {
-                options.data = path.resolve(
-                  root,
-                  data.startsWith('/') ? data.slice(1) : data
-                )
+                options.data = data
               }
             }
             send(stream, options)

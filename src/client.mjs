@@ -23,9 +23,11 @@ type RequestOptions = {
 
 type ClientEventType = 'altsvc' | 'origin'
 
-/** Not suitable for production yet! */
-export default class Client {
-  +_client: ClientHttp2Session
+/**
+ * Client for HTTP/2. Experimental.
+ */
+export class Client {
+  _client: ClientHttp2Session
 
   constructor(options: ClientOptions) {
     const { url, maxSessionMemory = 10, settings } = options
@@ -67,5 +69,10 @@ export default class Client {
     request.on('response', options.onResponse)
     request.on('data', options.onData)
     request.on('end', options.onEnd)
+  }
+
+  /** Closes the client. */
+  close(callback?: () => void): void {
+    this._client.close(callback)
   }
 }

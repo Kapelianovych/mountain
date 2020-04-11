@@ -1,10 +1,9 @@
 // @flow
 
-import path from 'path'
 import fs from 'fs'
 import mime from 'mime'
 
-import { isDir, fileOrDirExists } from './helpers.mjs'
+import { isDir, fileOrDirExists, absoluteFilePath } from './helpers.mjs'
 
 import type { Http2Headers, ServerHttp2Stream } from 'http2'
 
@@ -64,8 +63,9 @@ export default function send(stream: ServerHttp2Stream, options: SendOptions) {
       } else {
         sendError(stream, {
           status: 404,
-          reason: `No data is provided about file or directory: ${options.data ||
-            ''}`,
+          reason: `No data is provided about file or directory: ${
+            options.data || ''
+          }`,
         })
       }
       break
@@ -103,67 +103,45 @@ export function sendError(stream: ServerHttp2Stream, error: Http2Error) {
 /**
  * Sends file over network and close stream.
  * @param {import('http2').ServerHttp2Stream} stream
- * @param {String} fileOrDir - name of the file that need to be sent or directory in which all files need to be sent.
+ * @param {string} file
  * @param {import('http2').Http2Headers} [headers]
  * @throws {TypeError} if *fileOrDir* is not a string.
  */
 function sendFile(
   stream: ServerHttp2Stream,
-  fileOrDir: string,
+  file: string,
   headers?: Http2Headers = {}
 ) {
-  if (typeof fileOrDir !== 'string') {
+  if (typeof file !== 'string') {
     throw new TypeError(
-      `Type of [fileOrDir] parameter must be String, but given ${typeof fileOrDir}`
+      `Type of [file] parameter must be String, but given ${typeof file}`
     )
   }
 
-  if (fileOrDirExists(fileOrDir)) {
-    if (isDir(fileOrDir)) {
-      const files = fs.readdirSync(fileOrDir) // resolves path himself
+  const absoluteFileOrDirPath = absoluteFilePath(file)
 
-      files.forEach(file => {
-        const pathToFile = path.normalize(`${fileOrDir}/${file}`)
-        const stat = fs.statSync(pathToFile)
-        const defaultHeaders = {
-          ...headers,
-          'content-length': `${stat.size}`,
-          'last-modified': stat.mtime.toUTCString(),
-          'content-type': mime.getType(pathToFile),
-        }
-        if (file !== 'index.html') {
-          push(stream, {
-            type: 'file',
-            data: pathToFile,
-            headers: defaultHeaders,
-          })
-        }
-      })
-
-      stream.close()
-    } else {
-      const stat = fs.statSync(fileOrDir)
-      const defaultHeaders = {
-        ...headers,
-        'content-length': `${stat.size}`,
-        'last-modified': stat.mtime.toUTCString(),
-        'content-type': mime.getType(fileOrDir),
-      }
-
-      stream.respondWithFile(fileOrDir, defaultHeaders, {
-        onError(error) {
-          sendError(stream, {
-            status: 500,
-            reason: 'An error occurred while sending file to client.',
-            error,
-          })
-        },
-      })
+  if (fileOrDirExists(absoluteFileOrDirPath)) {
+    const stat = fs.statSync(absoluteFileOrDirPath)
+    const defaultHeaders = {
+      ...headers,
+      'content-length': `${stat.size}`,
+      'last-modified': stat.mtime.toUTCString(),
+      'content-type': mime.getType(absoluteFileOrDirPath),
     }
+
+    stream.respondWithFile(absoluteFileOrDirPath, defaultHeaders, {
+      onError(error) {
+        sendError(stream, {
+          status: 500,
+          reason: `An error occurred while sending file ${file} to client.`,
+          error,
+        })
+      },
+    })
   } else {
     sendError(stream, {
       status: 404,
-      reason: `File or directory: "${fileOrDir}" not found.`,
+      reason: `File: "${file}" not found.`,
     })
   }
 }
@@ -177,21 +155,22 @@ function sendData(
   headers?: Http2Headers = {}
 ) {
   const responseHeaders = {
-    'content-length': buffer.length,
-    'content-type': 'application/json',
-    // $FlowFixMe
     ...headers,
+    'content-length': `${buffer.length}`,
+    'content-type': 'application/json',
   }
+
   stream.additionalHeaders(responseHeaders)
   stream.end(JSON.stringify(buffer.toJSON()))
 }
 
 /**
+ * --- In future may be used ---
  * Push data to client.
  * @param {import('http2').ServerHttp2Stream} stream
  * @param {Object} options
- * @param {'data'|'file'|'headers'} options.type - type of data that need to be sent.
- * @param {String} [options.data] - data that need to be sent over network. For *file* type it needs to be the file or directory name. For *headers* type it need to be `null` or `undefined`. For *data* type ?.
+ * @param {'data' | 'file' | 'headers'} options.type - type of data that need to be sent.
+ * @param {string} [options.data] - data that need to be sent over network. For *file* type it needs to be the file or directory name. For *headers* type it need to be `null` or `undefined`. For *data* type ?.
  * @param {import('http2').Http2Headers} [options.headers] - if not provided default value is `{ ':path': '/' }`
  */
 function push(
