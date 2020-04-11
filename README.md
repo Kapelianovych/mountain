@@ -1,4 +1,4 @@
-# Mountain ⛰️ - HTTP/2-ready server and client (in future)
+# Mountain ⛰️ - HTTP/2-ready server and client
 
 This library is written and designed as set of ES modules.
 
