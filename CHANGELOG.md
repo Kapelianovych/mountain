@@ -1,4 +1,11 @@
-# 0.2.0
+# 0.3.0
+
+- Remove `setTimeout` method from `Server` instance. Use `timeout` parameter in `Server`'s constructor.
+- Add **parallel** and **threads** parameters to `Server`'s constructor.
+- Refactor `Server` class to work in cluster mode.
+- Make `onResponse`, `onData` and `onEnd` callbacks of `Client.request` method optional.
+
+## 0.2.0
 
 - Remove `rootDir` parameter from `Server` constructor.
 - Remove `Route` class - it is now plain object that was passed to `Route` constructor.

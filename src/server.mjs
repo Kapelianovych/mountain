@@ -2,6 +2,8 @@
 
 import { createSecureServer } from 'http2'
 import { Socket } from 'net'
+import cluster from 'cluster'
+import os from 'os'
 
 import send, { sendError } from './send.mjs'
 
@@ -40,7 +42,11 @@ type ServerOptions = {
   cert: Buffer,
   key: Buffer,
   timeout?: number,
+  parallel?: boolean,
+  threads?: number,
 }
+
+type ServerListenersMap = Map<string, (...args: any[]) => void>
 
 /**
  * Yet another simple server.
@@ -49,8 +55,9 @@ type ServerOptions = {
  * More about *HTTP/2* and how it works at [Google developers](https://developers.google.com/web/fundamentals/performance/http2).
  */
 export class Server {
-  /** @type {http2.Http2SecureServer} */
   _server: Http2SecureServer
+  _listeners: ServerListenersMap
+  _options: ServerOptions
 
   /**
    * Creates instance of Server with specific options.
@@ -58,34 +65,26 @@ export class Server {
    * Throws errors if `key` or `cert` is not defined.
    */
   constructor(options: ServerOptions) {
-    const { key, cert, timeout = 120000 } = options
-
-    if (!key) {
+    if (!options.key) {
       throw new Error(
         'Secret key ("key" property of Server\'s constructor options object) must be defined!'
       )
     }
-    if (!cert) {
+    if (!options.cert) {
       throw new Error(
         'Secret certificate ("cert" property of Server\'s constructor options object) must be defined!'
       )
     }
 
-    this._server = createSecureServer({
-      key,
-      cert,
-    })
-
-    if (timeout) {
-      this._server.setTimeout(timeout)
-    }
+    this._options = options
+    this._listeners = new Map()
   }
 
   /**
    * Add listener to server's events.
    */
   _on(eventType: Http2SecureServerEventType, listener: (...arguments) => void) {
-    this._server.on(eventType, listener)
+    this._listeners.set(eventType, listener)
   }
 
   onRequest(
@@ -146,38 +145,99 @@ export class Server {
   }
 
   /**
-   * Used to set the timeout value for http2 secure server requests, and sets a
-   * callback function that is called when there is no activity on the server
-   * after `milliseconds`.
-   *
-   * The given callback is registered as a listener on the *timeout* event.
-   *
-   * In case of no `callback` function were assigned, a new
-   * **ERR_INVALID_CALLBACK** error will be thrown.
-   */
-  setTimeout(milliseconds?: number = 120000, callback?: () => void): void {
-    // $FlowFixMe
-    this._server.setTimeout(milliseconds, callback)
-  }
-
-  /**
-   * Start listen for connections.
+   * Start listening for connections.
+   * Forks processes if [Server] is configured on parallel work.
    */
   listen(port: number, host?: string = 'localhost', listener?: () => void) {
-    // $FlowFixMe
-    this._server.listen(port, host, listener)
+    let { parallel, threads = os.cpus().length - 1 } = this._options
+
+    /** Reason: do not overload CPU. */
+    if (threads > os.cpus().length - 1) {
+      threads = os.cpus().length - 1
+    }
+
+    if (parallel) {
+      if (cluster.isMaster) {
+        for (let i = 0; i < threads; i++) {
+          cluster.fork()
+        }
+
+        cluster.on(
+          'exit',
+          (worker: cluster$Worker, code: number, signal: string) => {
+            console.error(
+              `Worker "${worker.id}" died with code "${code}". Signal: "${signal}"`
+            )
+
+            const newWorker = cluster.fork()
+            console.log(
+              `New worker with id "${newWorker.id}" has been started.`
+            )
+          }
+        )
+      } else {
+        cluster.worker.on('disconnect', () => {
+          console.error(
+            `Worker with id "${cluster.worker.id}" has been disconnected.`
+          )
+        })
+        cluster.worker.on('error', (error: Error) => {
+          console.error(`Date: ${new Date().toUTCString()}.
+          Error is occured in worker with id "${cluster.worker.id}".
+          Error: ${error.toString()}`)
+          process.exit(1)
+        })
+
+        this._server = startServer({
+          options: this._options,
+          listeners: this._listeners,
+          port,
+          host,
+          listener,
+        })
+      }
+    } else {
+      this._server = startServer({
+        options: this._options,
+        listeners: this._listeners,
+        port,
+        host,
+        listener,
+      })
+    }
   }
 
-  /**
-   * Stops the server from establishing new sessions. This does not prevent new
-   * request streams from being created due to the persistent nature of HTTP/2
-   * sessions.
-   *
-   * If `callback` is provided, it is not invoked until all active sessions have
-   * been closed, although the server has already stopped allowing new
-   * sessions. See [tls.Server.close()](https://nodejs.org/dist/latest-v12.x/docs/api/tls.html#tls_server_close_callback) for more details.
-   */
-  close(callback?: () => void) {
+  close(callback?: () => void): void {
     this._server.close(callback)
   }
+}
+
+function startServer({
+  options,
+  listeners,
+  port,
+  host,
+  listener,
+}: {
+  options: ServerOptions,
+  listeners: ServerListenersMap,
+  port: number,
+  host: string,
+  listener?: () => void,
+}) {
+  const { key, cert, timeout } = options
+
+  const server = createSecureServer({
+    key,
+    cert,
+  })
+
+  server.setTimeout(timeout)
+  for (const [event, listener] of listeners.entries()) {
+    server.on(event, listener)
+  }
+
+  server.listen(port, host, listener)
+
+  return server
 }

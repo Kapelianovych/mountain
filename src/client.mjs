@@ -11,9 +11,9 @@ export type ClientOptions = {
 }
 
 type RequestOptions = {
-  onResponse: (headers: Http2Headers) => void,
-  onData: (chunk: Buffer) => void,
-  onEnd: () => void,
+  onResponse?: (headers: Http2Headers) => void,
+  onData?: (chunk: Buffer) => void,
+  onEnd?: () => void,
   endStream?: boolean,
   exclusive?: boolean,
   parent?: number,
@@ -66,9 +66,15 @@ export class Client {
       waitForTrailers,
     })
 
-    request.on('response', options.onResponse)
-    request.on('data', options.onData)
-    request.on('end', options.onEnd)
+    if (options.onResponse) {
+      request.on('response', options.onResponse)
+    }
+    if (options.onData) {
+      request.on('data', options.onData)
+    }
+    if (options.onEnd) {
+      request.on('end', options.onEnd)
+    }
   }
 
   /** Closes the client. */

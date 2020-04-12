@@ -38,6 +38,8 @@ declare module '@prostory/mountain' {
     cert: Buffer,
     key: Buffer,
     timeout?: number,
+    parallel?: boolean,
+    threads?: number,
   }
 
   declare type Route = {
@@ -54,9 +56,9 @@ declare module '@prostory/mountain' {
   }
 
   declare type RequestOptions = {
-    onResponse: (headers: Http2Headers) => void,
-    onData: (chunk: Buffer) => void,
-    onEnd: () => void,
+    onResponse?: (headers: Http2Headers) => void,
+    onData?: (chunk: Buffer) => void,
+    onEnd?: () => void,
     endStream?: boolean,
     exclusive?: boolean,
     parent?: number,
@@ -80,7 +82,6 @@ declare module '@prostory/mountain' {
     onTimeout(listener: () => void): void;
     onUnknownProtocol(listener: (socket: Socket) => void): void;
     onError(listener: (error: Error) => void): void;
-    setTimeout(milliseconds?: number, callback?: () => void): void;
     listen(port: number, host: ?string, listener?: () => void): void;
     close(callback?: () => void): void;
   }

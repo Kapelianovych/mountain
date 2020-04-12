@@ -1,7 +1,6 @@
 // @flow
 
 import { sendError } from './send.mjs'
-import { constants } from 'http2'
 
 import type { Http2Request, Http2Response } from './server.mjs'
 
