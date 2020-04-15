@@ -12,38 +12,68 @@ type Route = {|
 |}
 
 export class Router {
-  _routes: Route[]
+  // Map<method, routes[]>
+  _routes: Map<string, Route[]>
+  _notFound: Route | void
 
   constructor(routes: Route[]) {
-    this._routes = routes
+    this._routes = new Map()
+    this._notFound = routes.find((route) => route.notFound)
+
+    const routesWithoutNotFound = routes.filter((routes) => !routes.notFound)
+    routesWithoutNotFound.forEach((route) => {
+      const routesGroup = this._routes.get(route.method.toLowerCase())
+      if (routesGroup) {
+        routesGroup.push(route)
+      } else {
+        this._routes.set(route.method.toLowerCase(), [route])
+      }
+    })
   }
 
-  set(): (request: Http2Request, response: Http2Response) => void {
+  deliver(): (request: Http2Request, response: Http2Response) => void {
     return (request: Http2Request, response: Http2Response) => {
       const path = request.headers[':path']
       const method = request.headers[':method']
 
-      const route = this._routes.find((r) => {
-        const pathRegExp =
-          typeof r.path === 'string' ? new RegExp(`^${r.path}$`) : r.path
+      const routesGroup = this._routes.get(method.toLowerCase())
 
-        return (
-          pathRegExp.test(path) &&
-          r.method.toLocaleLowerCase() === method.toLocaleLowerCase()
-        )
-      })
+      if (routesGroup) {
+        let neededRoute: Route | null = null
 
-      if (route) {
-        route.handle(request, response)
+        for (const route of routesGroup) {
+          const pathRegExp = new RegExp(
+            typeof route.path === 'string'
+              ? new RegExp(`^${route.path}$`)
+              : route.path
+          )
+          if (
+            pathRegExp.test(path) &&
+            route.method.toLowerCase() === method.toLowerCase()
+          ) {
+            neededRoute = route
+          }
+        }
+
+        if (neededRoute) {
+          neededRoute.handle(request, response)
+        } else {
+          if (this._notFound) {
+            this._notFound.handle(request, response)
+          } else {
+            sendError(request.stream, {
+              status: 404,
+              reason: `No route that match specified path: ${path}`,
+            })
+          }
+        }
       } else {
-        const notFoundRoute = this._routes.find((route) => route.notFound)
-
-        if (notFoundRoute) {
-          notFoundRoute.handle(request, response)
+        if (this._notFound) {
+          this._notFound.handle(request, response)
         } else {
           sendError(request.stream, {
             status: 404,
-            reason: `No route that match specified path: ${path}`,
+            reason: `No route that match path "${path}" and method "${method}".`,
           })
         }
       }

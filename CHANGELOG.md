@@ -1,4 +1,9 @@
-# 0.3.0
+# 0.4.0
+
+- Rename `Router.set` method to `Router.deliver`.
+- Rewrite internal behavior of `Router`.
+
+## 0.3.0
 
 - Remove `setTimeout` method from `Server` instance. Use `timeout` parameter in `Server`'s constructor.
 - Add **parallel** and **threads** parameters to `Server`'s constructor.

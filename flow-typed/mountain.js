@@ -69,7 +69,7 @@ declare module '@prostory/mountain' {
   declare export class Router {
     constructor(routes: Route[]): Router;
 
-    set(): (request: Http2Request, response: Http2Response) => void;
+    deliver(): (request: Http2Request, response: Http2Response) => void;
   }
 
   declare export class Server {

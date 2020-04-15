@@ -202,6 +202,8 @@ Methods of the instance of _Server_ class:
     server.close(callback?: () => void)
   ```
 
+  Execute this methods only after `Server.listen`. Otherwiser an error will be thrown (server will not be initialized yet). 
+
 ### Route
 
 You can handle all requests in one function that passed to `onRequest` method or split it by **:path** and **:method**.
@@ -245,10 +247,10 @@ const route2 = {
   },
 }
 
-server.onRequest(new Router([route, route2]).set())
+server.onRequest(new Router([route, route2]).deliver())
 ```
 
-It has `set` method that return function that need to be placed to `server.onRequest` method.
+It has `deliver` method that return function that need to be placed to `server.onRequest` method.
 
 ### Client
 
