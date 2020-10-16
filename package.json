@@ -32,7 +32,7 @@
     "eslint-plugin-node": "^11.0.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "flow-bin": "^0.122.0",
+    "flow-bin": "^0.136.0",
     "gulp": "^4.0.2",
     "gulp-flow-remove-types2": "^1.0.0",
     "gulp-uglify-es": "^2.0.0"
