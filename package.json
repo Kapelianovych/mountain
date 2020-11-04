@@ -1,17 +1,25 @@
 {
   "name": "@prostory/mountain",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Yet another server and client. For creating HTTP/2 servers and clients.",
-  "main": "./dist/index.mjs",
+  "type": "module",
+  "main": "./build/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/YevhenKap/mountain"
   },
   "scripts": {
-    "clean": "rm -r dist/*",
-    "watch": "gulp",
-    "build": "npm run clean; gulp minimize",
-    "release": "npm run build; npm publish --access public"
+    "clean": "rm -r build/*",
+    "copy:declaration": "cp src/declaration/index.d.ts build/index.d.ts",
+    "copy:docs": "cp README.md build/README.md",
+    "copy:changelog": "cp CHANGELOG.md build/CHANGELOG.md",
+    "copy:license": "cp LICENSE build/LICENSE",
+    "copy:package": "cp package.json build/package.json",
+    "copy": "npm run copy:declaration; npm run copy:docs; npm run copy:changelog; npm run copy:license; npm run copy:package",
+    "prebuild": "npm run copy",
+    "build": "rollup -c",
+    "prerelease": "npm run build",
+    "release": "npm publish --access public"
   },
   "keywords": [
     "Server",
@@ -21,20 +29,16 @@
   "author": "Kapelianovych Yevhen",
   "license": "MIT",
   "dependencies": {
-    "mime": "^2.4.4"
+    "@fluss/core": "^0.8.0",
+    "mime": "^2.4.6"
   },
   "devDependencies": {
-    "babel-eslint": "^10.0.3",
-    "eslint": "^6.8.0",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-flowtype": "^4.5.3",
-    "eslint-plugin-import": "^2.20.1",
-    "eslint-plugin-node": "^11.0.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
-    "flow-bin": "^0.122.0",
-    "gulp": "^4.0.2",
-    "gulp-flow-remove-types2": "^1.0.0",
-    "gulp-uglify-es": "^2.0.0"
+    "@rollup/plugin-typescript": "^6.1.0",
+    "@types/mime": "^2.0.3",
+    "@types/node": "^14.14.5",
+    "rollup": "^2.32.1",
+    "rollup-plugin-terser": "^7.0.2",
+    "tslib": "^2.0.3",
+    "typescript": "^4.0.3"
   }
 }

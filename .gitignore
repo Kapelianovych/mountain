@@ -1,7 +1,7 @@
 node_modules/
 dist/
+build/
+certs/
 .vscode/
 .idea/
 .DS_Store
-
-package-lock.json

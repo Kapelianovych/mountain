@@ -1,4 +1,8 @@
-# 0.4.0
+# [0.5.0] - 2020-10-28
+
+Completely rewrite package with TypeScript. 
+
+## 0.4.0
 
 - Rename `Router.set` method to `Router.deliver`.
 - Rewrite internal behavior of `Router`.
