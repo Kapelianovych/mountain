@@ -8,8 +8,8 @@ import {
   SecureServerOptions,
   Http2ServerResponse,
   OutgoingHttpHeaders,
-  SecureClientSessionOptions,
   IncomingHttpStatusHeader,
+  SecureClientSessionOptions,
   ClientSessionRequestOptions,
 } from 'http2';
 

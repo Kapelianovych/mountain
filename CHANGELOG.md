@@ -1,6 +1,6 @@
 # [0.5.0] - 2020-10-28
 
-Completely rewrite package with TypeScript. 
+Completely rewrite package with TypeScript with absolutely new API.
 
 ## 0.4.0
 
@@ -19,7 +19,7 @@ Completely rewrite package with TypeScript.
 - Remove `rootDir` parameter from `Server` constructor.
 - Remove `Route` class - it is now plain object that was passed to `Route` constructor.
 - Rename `Handler` to `Router`.
-- Temporary rid of *push* ability of `HTTP/2` server.
+- Temporary rid of _push_ ability of `HTTP/2` server.
 - Fix error when file was not found on server. It caused closing connection before.
 - Library now export `Client`.
 
@@ -36,7 +36,7 @@ Completely rewrite package with TypeScript.
 
 ## 0.1.3
 
-- Write README. 
+- Write README.
 
 ## 0.1.2
 
