@@ -183,7 +183,7 @@ export namespace respond {
    */
   function json<T = any>(
     stream: ServerHttp2Stream,
-    payload?: T,
+    payload: T,
     headers?: OutgoingHttpHeaders
   ): void;
 
