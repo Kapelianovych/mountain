@@ -1,7 +1,4 @@
+.DS_Store
 node_modules/
-dist/
 build/
 certs/
-.vscode/
-.idea/
-.DS_Store

@@ -181,9 +181,9 @@ export namespace respond {
    * By default `status` and `content-type` headers are set.
    * You can override headers by providing own key/value pairs.
    */
-  function json(
+  function json<T = any>(
     stream: ServerHttp2Stream,
-    payload?: any,
+    payload?: T,
     headers?: OutgoingHttpHeaders
   ): void;
 
