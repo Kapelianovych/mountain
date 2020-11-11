@@ -162,7 +162,7 @@ export namespace router {
 export function files(dir?: string): server.Middleware;
 
 export interface Body {
-  json<T>(): Promise<T>;
+  json<T extends object = object>(): Promise<T>;
   raw(): Promise<string>;
 }
 
@@ -181,7 +181,7 @@ export namespace respond {
    * By default `status` and `content-type` headers are set.
    * You can override headers by providing own key/value pairs.
    */
-  function json<T = any>(
+  function json<T extends object = object>(
     stream: ServerHttp2Stream,
     payload: T,
     headers?: OutgoingHttpHeaders

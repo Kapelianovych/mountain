@@ -11,7 +11,7 @@ export function headers(
   stream.respond(headers, { endStream: true });
 }
 
-export function json<T = any>(
+export function json<T extends object = object>(
   stream: ServerHttp2Stream,
   payload: T,
   headers: OutgoingHttpHeaders = {}

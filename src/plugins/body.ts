@@ -1,7 +1,7 @@
 import { Http2Stream } from 'http2';
 
 export interface Body {
-  json<T>(): Promise<T>;
+  json<T extends object = object>(): Promise<T>;
   raw(): Promise<string>;
 }
 
