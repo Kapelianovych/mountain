@@ -8,5 +8,5 @@ export default {
     format: 'es',
   },
   plugins: [typescript(), terser()],
-  external: ['mime', '@fluss/core', 'http2', 'path', 'fs'],
+  external: ['mime', '@fluss/core', 'http2', 'path', 'fs', 'busboy'],
 };

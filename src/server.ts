@@ -7,6 +7,7 @@ import {
   SecureServerOptions,
   IncomingHttpHeaders,
   Http2ServerResponse,
+  IncomingHttpStatusHeader,
 } from 'http2';
 import type { TLSSocket } from 'tls';
 
@@ -18,7 +19,7 @@ export function init(options: SecureServerOptions): void {
 
 export type Middleware = (
   stream: ServerHttp2Stream,
-  headers: IncomingHttpHeaders,
+  headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
   flags: number
 ) => void;
 

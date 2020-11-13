@@ -1,8 +1,7 @@
 import mime from 'mime';
 import { existsSync } from 'fs';
+import { ContentTypeValue } from '../constants';
 import { constants, OutgoingHttpHeaders, ServerHttp2Stream } from 'http2';
-
-const JSON_CONTENT_TYPE = 'application/json';
 
 export function headers(
   stream: ServerHttp2Stream,
@@ -11,14 +10,27 @@ export function headers(
   stream.respond(headers, { endStream: true });
 }
 
-export function json<T extends object = object>(
+export function text(
+  stream: ServerHttp2Stream,
+  payload: string,
+  headers: OutgoingHttpHeaders = {}
+): void {
+  stream.respond({
+    [constants.HTTP2_HEADER_STATUS]: constants.HTTP_STATUS_OK,
+    [constants.HTTP2_HEADER_CONTENT_TYPE]: ContentTypeValue.TEXT,
+    ...headers,
+  });
+  stream.end(payload);
+}
+
+export function json<T extends object>(
   stream: ServerHttp2Stream,
   payload: T,
   headers: OutgoingHttpHeaders = {}
 ): void {
   stream.respond({
     [constants.HTTP2_HEADER_STATUS]: constants.HTTP_STATUS_OK,
-    [constants.HTTP2_HEADER_CONTENT_TYPE]: JSON_CONTENT_TYPE,
+    [constants.HTTP2_HEADER_CONTENT_TYPE]: ContentTypeValue.JSON,
     ...headers,
   });
 

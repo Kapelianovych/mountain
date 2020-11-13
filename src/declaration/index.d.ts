@@ -34,7 +34,7 @@ export namespace server {
 
   type Middleware = (
     stream: ServerHttp2Stream,
-    headers: IncomingHttpHeaders,
+    headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
     flags: number
   ) => void;
 
@@ -77,22 +77,32 @@ export namespace client {
     options?: SecureClientSessionOptions
   ): void;
 
+  interface Body {
+    text(): Promise<string>;
+    json<T extends object>(): Promise<T>;
+    urlencoded<T extends Record<string, string>>(): Promise<T>;
+    formData<T extends body.FormDataDecoded>(): Promise<T>;
+  }
+
   interface Response {
     headers: IncomingHttpHeaders & IncomingHttpStatusHeader;
     body: Body;
   }
 
-  interface RequestOptions {
+  interface RequestOptions<T> {
     headers?: OutgoingHttpHeaders;
-    payload?: any;
+    payload?: T;
     options?: ClientSessionRequestOptions;
   }
 
   /**
-   * Makes a request to remote peer.
+   * Makes a request to remote peer on opened connection.
    * By default it performs **GET** request to _path_ URL.
    */
-  function request(path: string, options?: RequestOptions): Promise<Response>;
+  function request<T = any>(
+    path: string,
+    options?: RequestOptions<T>
+  ): Promise<Response>;
 
   /** Closes connection with remote peer. */
   function close(callback?: VoidFunction): void;
@@ -161,15 +171,63 @@ export namespace router {
  */
 export function files(dir?: string): server.Middleware;
 
-export interface Body {
-  json<T extends object = object>(): Promise<T>;
-  raw(): Promise<string>;
+export namespace body {
+  /** Parses reauest body as `UTF8` string. */
+  function text(stream: Http2Stream): Promise<string>;
+
+  /** Parses request body as `JSON` format. */
+  function json<T extends object>(
+    stream: Http2Stream,
+    headers: IncomingHttpHeaders & IncomingHttpStatusHeader
+  ): Promise<T>;
+
+  /**
+   * Parses request with `application/x-www-form-urlencoded`.
+   * @returns object with key/value pairs.
+   */
+  function urlencoded<T extends Record<string, string>>(
+    stream: Http2Stream,
+    headers: IncomingHttpHeaders & IncomingHttpStatusHeader
+  ): Promise<T>;
+
+  type FileData = {
+    mime: string;
+    path: string;
+    filename: string;
+    encoding: string;
+  };
+
+  interface FormDataDecoded {
+    [index: string]: string | FileData;
+  }
+
+  interface FormDataOptions {
+    directory?: string;
+  }
+
+  /**
+   * Parses request with `multipart/form-data`.
+   * All files will be written to disk in _current
+   * working directory_. You can specify deeper path
+   * by providing **options.directory** field.
+   * @returns object with key/value pairs. Value can
+   * be either text data or object with file stats.
+   */
+  function formData<T extends FormDataDecoded>(
+    stream: Http2Stream,
+    headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
+    options?: FormDataOptions
+  ): Promise<T>;
 }
 
-/** Parses body from request or response stream. */
-export function body(stream: Http2Stream): Body;
-
 export namespace respond {
+  /** Sends plain text to client. */
+  function text(
+    stream: ServerHttp2Stream,
+    payload: string,
+    headers?: OutgoingHttpHeaders
+  ): void;
+
   /** Sends headers to client and ends response. */
   function headers(
     stream: ServerHttp2Stream,
@@ -181,7 +239,7 @@ export namespace respond {
    * By default `status` and `content-type` headers are set.
    * You can override headers by providing own key/value pairs.
    */
-  function json<T extends object = object>(
+  function json<T extends object>(
     stream: ServerHttp2Stream,
     payload: T,
     headers?: OutgoingHttpHeaders

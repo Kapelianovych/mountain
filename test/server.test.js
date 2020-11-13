@@ -1,45 +1,40 @@
-import { readFileSync } from 'fs';
+import { createWriteStream, open, readFileSync, writeFileSync } from 'fs';
+import { writeFile } from 'fs/promises';
 import { constants } from 'http2';
-import { server, cookies, router, respond, files } from '../build/index.js';
+import { resolve } from 'path';
+import {
+  server,
+  cookies,
+  router,
+  respond,
+  files,
+  body,
+  client,
+} from '../build/index.js';
 
 server.init({
   key: readFileSync('certs/localhost.key'),
   cert: readFileSync('certs/localhost.crt'),
 });
 
-server.use(files('test'));
-
-router.create({
-  prefix: '/api',
-})
+router
+  .create()
   .get('/', (stream) => {
-    stream.respond({
-      'Content-Type': 'text/html',
-      'Set-Cookie': cookies.create('id', '5'),
+    respond.file(stream, resolve(process.cwd(), 'test', 'index.html'));
+  })
+  .post('/ho', async (stream, headers) => {
+    const data = await body.urlencoded(stream, headers);
+    console.log(data);
+
+    //writeFileSync(resolve(process.cwd(), 'test', avatar.filename), avatar.data)
+
+    respond.headers(stream, {
+      [constants.HTTP2_HEADER_STATUS]: constants.HTTP_STATUS_OK,
     });
-    stream.write('<script>console.log(document.cookie)</script>', 'utf8');
-    stream.end()
   })
-  .get('/ho', (stream) => {
-    stream.end(stream.readable + '');
-  })
-  .post('/post', (stream) => {
-    body(stream).json().then(console.log);
-    stream.end();
-  })
-  .merge(
-    router.create({ prefix: '/v' }).get('/', (stream) => {
-      stream.end('from v');
-    }).routes
-  )
   .forEach(server.use);
 
 server.listen(4000);
 
 // client.open('https://google.com');
-
-// client.request().then(data => console.log(data.headers))
-
-// console.log('hello')
-
-// client.request().then(data => console.log(data.headers))
+// client.request('/').then((response) => console.log(response.headers))
