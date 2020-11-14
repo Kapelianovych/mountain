@@ -7,7 +7,7 @@ export function files(dir: string = ''): Middleware {
   return (stream, headers) => {
     const path = headers[constants.HTTP2_HEADER_PATH] as string;
 
-    if (/.+\.\w+$/.test(path)) {
+    if (/.+\.\w[\w\d]*$/.test(path)) {
       const absolutePath = resolve(
         process.cwd(),
         dir,
