@@ -9,9 +9,12 @@ import {
   Http2ServerResponse,
   IncomingHttpStatusHeader,
 } from 'http2';
+import type { Router } from './router';
 import type { TLSSocket } from 'tls';
 
 let serverInstance: Http2SecureServer;
+
+const middlewares: Array<Middleware> = [];
 
 export function init(options: SecureServerOptions): void {
   serverInstance = createSecureServer(options);
@@ -23,8 +26,10 @@ export type Middleware = (
   flags: number
 ) => void;
 
-export function use(handler: Middleware): void {
-  on('stream', handler);
+export function use(handler: Middleware | Router): void {
+  typeof handler === 'function'
+    ? middlewares.push(handler)
+    : handler.middlewares.forEach((middleware) => middlewares.push(middleware));
 }
 
 export function listen(
@@ -34,7 +39,11 @@ export function listen(
     console.log(`Server started at ${host}:${port}`);
   }
 ): void {
-  serverInstance.listen(port, host, listeningListener);
+  serverInstance
+    .on('stream', (stream, headers, flags) => {
+      middlewares.forEach((fn) => fn(stream, headers, flags));
+    })
+    .listen(port, host, listeningListener);
 }
 
 export function close(callback?: (error?: Error) => void): void {

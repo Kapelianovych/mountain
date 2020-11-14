@@ -1,5 +1,4 @@
 import { constants } from 'http2';
-import type { use } from './server';
 import type { Middleware } from './server';
 
 type RouterOptions = {
@@ -18,6 +17,12 @@ class Router {
 
   get routes(): ReadonlyMap<string, (path: string) => Middleware> {
     return this.#routes;
+  }
+
+  get middlewares(): ReadonlyArray<Middleware> {
+    return Array.from(this.#routes.entries()).map(([path, getMiddlewareFor]) =>
+      getMiddlewareFor(path)
+    );
   }
 
   head(path: string, handler: Middleware): this {
@@ -44,14 +49,8 @@ class Router {
     return this._method(constants.HTTP2_METHOD_DELETE, path, handler);
   }
 
-  forEach(fn: typeof use): void {
-    this.#routes.forEach((getMiddlewareFor, path) =>
-      fn(getMiddlewareFor(path))
-    );
-  }
-
-  merge(routes: ReadonlyMap<string, (path: string) => Middleware>): this {
-    routes.forEach((getMiddlewareFor, path) => {
+  merge(router: Router): this {
+    router.routes.forEach((getMiddlewareFor, path) => {
       this.#routes.set(
         addBounds(this.#prefix + removeBounds(path)),
         getMiddlewareFor
@@ -79,6 +78,8 @@ class Router {
     return this;
   }
 }
+
+export type { Router };
 
 export function create(options: RouterOptions = {}): Router {
   return new Router(options);

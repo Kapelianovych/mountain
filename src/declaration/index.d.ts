@@ -38,11 +38,8 @@ export namespace server {
     flags: number
   ) => void;
 
-  /**
-   * Register handler for incoming requests.
-   * Short version of `server.on('stream', handler)`.
-   */
-  function use(handler: Middleware): void;
+  /** Register handler for incoming requests. */
+  function use(handler: Middleware | router.Router): void;
 
   interface Http2ServerEventMap {
     sessionError: (error: Error) => void;
@@ -139,6 +136,8 @@ export namespace router {
   interface Router {
     readonly routes: ReadonlyMap<string, (path: string) => server.Middleware>;
 
+    readonly middlewares: ReadonlyArray<server.Middleware>;
+
     head(path: string, handler: server.Middleware): this;
 
     options(path: string, handler: server.Middleware): this;
@@ -151,11 +150,7 @@ export namespace router {
 
     delete(path: string, handler: server.Middleware): this;
 
-    forEach(fn: typeof server.use): void;
-
-    merge(
-      routes: ReadonlyMap<string, (path: string) => server.Middleware>
-    ): this;
+    merge(router: Router): this;
   }
 
   /** Creates `Router` instance. */
@@ -249,6 +244,8 @@ export namespace respond {
    * Sends file to client and ends response.
    * By default `status`, `content-type` and `last-modified` headers are set
    * and depends on file stats.
+   *
+   * @param path must be an absolute path to file.
    *
    * If file will not found, **404** response will be sent.
    */
