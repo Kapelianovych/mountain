@@ -47,7 +47,8 @@ export function file(
       path,
       {
         [constants.HTTP2_HEADER_STATUS]: constants.HTTP_STATUS_OK,
-        [constants.HTTP2_HEADER_CONTENT_TYPE]: mime.getType(path) || undefined,
+        [constants.HTTP2_HEADER_CONTENT_TYPE]:
+          mime.getType(path) ?? ContentTypeValue.TEXT,
         // The content-length header field will be automatically set.
         ...headers,
       },
