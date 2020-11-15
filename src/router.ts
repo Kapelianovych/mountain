@@ -61,8 +61,9 @@ class Router {
   }
 
   private _method(method: string, path: string, handler: Middleware): this {
-    const fullPath = addBounds(
-      this.#prefix + (path.endsWith('/') ? `${path}?` : path)
+    const unboundedPath = removeBounds(path);
+		const fullPath = addBounds(
+      this.#prefix + (unboundedPath.endsWith('/') ? `${unboundedPath}?` : unboundedPath)
     );
 
     this.#routes.set(fullPath, (path: string) => (stream, headers, flags) => {
@@ -86,9 +87,11 @@ export function create(options: RouterOptions = {}): Router {
 }
 
 function addBounds(path: string): string {
-  return `^${path}$`;
+	let boundedPath = path.startsWith('^') ? path : `^${path}`;
+	return boundedPath.endsWith('$') ? boundedPath : `${boundedPath}$`;
 }
 
 function removeBounds(path: string): string {
-  return path.slice(1, path.length - 1);
+	let unboundedPath = path.startsWith('^') ? path.slice(1) : path;
+  return unboundedPath.endsWith('$') ? unboundedPath.slice(0, unboundedPath.length - 1) : unboundedPath;
 }
