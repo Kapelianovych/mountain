@@ -108,9 +108,9 @@ interface ClientHttp2SessionEventMap extends Http2SessionEventMap {
   origin: (origins: Array<string>) => void;
 }
 
-export function on(
-  event: keyof ClientHttp2SessionEventMap,
-  listener: ClientHttp2SessionEventMap[typeof event]
+export function on<T extends keyof ClientHttp2SessionEventMap>(
+  event: T,
+  listener: ClientHttp2SessionEventMap[T]
 ): void {
   client.on(event, listener);
 }

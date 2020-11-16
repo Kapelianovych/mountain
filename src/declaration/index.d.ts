@@ -133,9 +133,9 @@ export namespace client {
     origin: (origins: Array<string>) => void;
   }
 
-  function on(
-    event: keyof ClientHttp2SessionEventMap,
-    listener: ClientHttp2SessionEventMap[typeof event]
+  function on<T extends keyof ClientHttp2SessionEventMap>(
+    event: T,
+    listener: ClientHttp2SessionEventMap[T]
   ): void;
 
   function timeout(ms: number, callback?: VoidFunction): void;
