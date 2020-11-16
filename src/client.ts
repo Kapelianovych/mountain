@@ -1,3 +1,4 @@
+import { isNothing } from '@fluss/core';
 import { json, text, urlencoded, formData } from './plugins/body/body';
 import {
   connect,
@@ -120,5 +121,9 @@ export function timeout(ms: number, callback?: VoidFunction): void {
 }
 
 export function isClosed(): boolean {
-  return client.closed;
+  /**
+   * If client is undefined, it is the same as
+   * connection is closed.
+   */
+  return isNothing(client) || client.closed;
 }
