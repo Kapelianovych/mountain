@@ -13,18 +13,19 @@ export async function urlencoded<T extends Record<string, string>>(
   stream: Http2Stream,
   headers: IncomingHttpHeaders & IncomingHttpStatusHeader
 ): Promise<T> {
+  const contentTypeHeaderValue =
+    headers[constants.HTTP2_HEADER_CONTENT_TYPE] ?? '';
+
   return new Promise<string>((resolve, reject) => {
     const chunks: Array<string> = [];
 
     if (
-      headers[constants.HTTP2_HEADER_CONTENT_TYPE] !==
-      ContentTypeValue.FORM_URLENCODED
+      // Content-Type can contain charset field.
+      !contentTypeHeaderValue.includes(ContentTypeValue.FORM_URLENCODED)
     ) {
       reject(
         new Error(
-          `Unexpected Content-Type - "${
-            headers[constants.HTTP2_HEADER_CONTENT_TYPE]
-          }". Expected "${ContentTypeValue.FORM_URLENCODED}"`
+          `Unexpected Content-Type - "${contentTypeHeaderValue}". Expected "${ContentTypeValue.FORM_URLENCODED}"`
         )
       );
     }

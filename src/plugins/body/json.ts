@@ -10,17 +10,19 @@ export function json<T extends object>(
   stream: Http2Stream,
   headers: IncomingHttpHeaders & IncomingHttpStatusHeader
 ): Promise<T> {
+  const contentTypeHeaderValue =
+    headers[constants.HTTP2_HEADER_CONTENT_TYPE] ?? '';
+
   return new Promise<string>((resolve, reject) => {
     const chunks: Array<string> = [];
 
     if (
-      headers[constants.HTTP2_HEADER_CONTENT_TYPE] !== ContentTypeValue.JSON
+      // Value of Content-Type header can contain charset field.
+      !contentTypeHeaderValue.includes(ContentTypeValue.JSON)
     ) {
       reject(
         new Error(
-          `Unexpected Content-Type - "${
-            headers[constants.HTTP2_HEADER_CONTENT_TYPE]
-          }". Expected "${ContentTypeValue.JSON}"`
+          `Unexpected Content-Type - "${contentTypeHeaderValue}". Expected "${ContentTypeValue.JSON}"`
         )
       );
     }

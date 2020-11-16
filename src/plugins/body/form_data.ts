@@ -29,18 +29,19 @@ export async function formData<T extends FormDataDecoded>(
   headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
   options: FormDataOptions = {}
 ): Promise<T> {
+  const contentTypeHeaderValue =
+    headers[constants.HTTP2_HEADER_CONTENT_TYPE] ?? '';
+
   return new Promise<T>((resolve, reject) => {
     const formDataResponse = {} as FormDataDecoded;
 
     if (
-      headers[constants.HTTP2_HEADER_CONTENT_TYPE] !==
-      ContentTypeValue.MULTIPART_FORM_DATA
+      // Content-Type can contain charset and boundary fields.
+      !contentTypeHeaderValue.includes(ContentTypeValue.MULTIPART_FORM_DATA)
     ) {
       reject(
         new Error(
-          `Unexpected Content-Type - "${
-            headers[constants.HTTP2_HEADER_CONTENT_TYPE]
-          }". Expected "${ContentTypeValue.MULTIPART_FORM_DATA}"`
+          `Unexpected Content-Type - "${contentTypeHeaderValue}". Expected "${ContentTypeValue.MULTIPART_FORM_DATA}"`
         )
       );
     }
