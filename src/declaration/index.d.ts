@@ -1,6 +1,8 @@
+import { Socket } from 'net';
 import { TLSSocket } from 'tls';
 import {
   Http2Stream,
+  Http2Session,
   ServerHttp2Stream,
   Http2ServerRequest,
   ServerHttp2Session,
@@ -103,6 +105,42 @@ export namespace client {
 
   /** Closes connection with remote peer. */
   function close(callback?: VoidFunction): void;
+
+  interface Http2SessionEventMap {
+    close: VoidFunction;
+    connect: (session: Http2Session, socket: Socket) => void;
+    error: (error: Error) => void;
+    frameError: (type: number, code: number, id: number) => void;
+    goaway: (
+      errorCode: number,
+      lastStreamID: number,
+      opaqueData: Buffer
+    ) => void;
+    localSettings: (settings: SecureClientSessionOptions) => void;
+    remoteSettings: (settings: SecureClientSessionOptions) => void;
+    ping: (payload: Buffer) => void;
+    stream: (
+      stream: Http2Stream,
+      headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
+      flags: number,
+      rawHeaders: ReadonlyArray<string>
+    ) => void;
+    timeout: VoidFunction;
+  }
+
+  interface ClientHttp2SessionEventMap extends Http2SessionEventMap {
+    altsvc: (alt: string, origin: string, streamId: number) => void;
+    origin: (origins: Array<string>) => void;
+  }
+
+  function on(
+    event: keyof ClientHttp2SessionEventMap,
+    listener: ClientHttp2SessionEventMap[typeof event]
+  ): void;
+
+  function timeout(ms: number, callback?: VoidFunction): void;
+
+  function isClosed(): boolean;
 }
 
 export namespace cookies {

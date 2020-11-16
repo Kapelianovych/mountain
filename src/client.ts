@@ -2,6 +2,8 @@ import { json, text, urlencoded, formData } from './plugins/body/body';
 import {
   connect,
   constants,
+  Http2Stream,
+  Http2Session,
   ClientHttp2Stream,
   ClientHttp2Session,
   IncomingHttpHeaders,
@@ -10,6 +12,7 @@ import {
   SecureClientSessionOptions,
   ClientSessionRequestOptions,
 } from 'http2';
+import type { Socket } from 'net';
 import type { FormDataDecoded } from './plugins/body/form_data';
 
 let client: ClientHttp2Session;
@@ -80,4 +83,42 @@ export async function request<T = any>(
 
 export function close(callback?: VoidFunction): void {
   client.close(callback);
+}
+
+interface Http2SessionEventMap {
+  close: VoidFunction;
+  connect: (session: Http2Session, socket: Socket) => void;
+  error: (error: Error) => void;
+  frameError: (type: number, code: number, id: number) => void;
+  goaway: (errorCode: number, lastStreamID: number, opaqueData: Buffer) => void;
+  localSettings: (settings: SecureClientSessionOptions) => void;
+  remoteSettings: (settings: SecureClientSessionOptions) => void;
+  ping: (payload: Buffer) => void;
+  stream: (
+    stream: Http2Stream,
+    headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
+    flags: number,
+    rawHeaders: ReadonlyArray<string>
+  ) => void;
+  timeout: VoidFunction;
+}
+
+interface ClientHttp2SessionEventMap extends Http2SessionEventMap {
+  altsvc: (alt: string, origin: string, streamId: number) => void;
+  origin: (origins: Array<string>) => void;
+}
+
+export function on(
+  event: keyof ClientHttp2SessionEventMap,
+  listener: ClientHttp2SessionEventMap[typeof event]
+): void {
+  client.on(event, listener);
+}
+
+export function timeout(ms: number, callback?: VoidFunction): void {
+  client.setTimeout(ms, callback);
+}
+
+export function isClosed(): boolean {
+  return client.closed;
 }
