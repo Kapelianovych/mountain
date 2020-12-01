@@ -9,6 +9,10 @@ import {
 const URL_DELIMETER = '&';
 const PAIR_DELIMETER = '=';
 
+/**
+ * Parses request with `application/x-www-form-urlencoded`.
+ * @returns object with key/value pairs.
+ */
 export async function urlencoded<T extends Record<string, string>>(
   stream: Http2Stream,
   headers: IncomingHttpHeaders & IncomingHttpStatusHeader

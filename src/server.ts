@@ -1,37 +1,33 @@
 import {
-  ServerHttp2Stream,
   Http2SecureServer,
   createSecureServer,
-  ServerHttp2Session,
-  Http2ServerRequest,
   SecureServerOptions,
-  IncomingHttpHeaders,
-  Http2ServerResponse,
-  IncomingHttpStatusHeader,
 } from 'http2';
 import type { Router } from './router';
-import type { TLSSocket } from 'tls';
+import type { Http2ServerEventMap, Middleware } from './types';
 
 let serverInstance: Http2SecureServer;
 
 const middlewares: Array<Middleware> = [];
 
+/**
+ * Initializes secure server.
+ *
+ * If _options.allowHttp1_: _true_ then also add listener
+ * to `request` event.
+ */
 export function init(options: SecureServerOptions): void {
   serverInstance = createSecureServer(options);
 }
 
-export type Middleware = (
-  stream: ServerHttp2Stream,
-  headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
-  flags: number
-) => void;
-
+/** Registers handlers for incoming requests. */
 export function use(handler: Middleware | Router): void {
   typeof handler === 'function'
     ? middlewares.push(handler)
     : handler.middlewares.forEach((middleware) => middlewares.push(middleware));
 }
 
+/** Starts server. */
 export function listen(
   port: number = 3333,
   host: string = 'localhost',
@@ -46,23 +42,12 @@ export function listen(
     .listen(port, host, listeningListener);
 }
 
+/** Closes server. */
 export function close(callback?: (error?: Error) => void): void {
   serverInstance.close(callback);
 }
 
-interface Http2ServerEventMap {
-  sessionError: (error: Error) => void;
-  stream: Middleware;
-  timeout: VoidFunction;
-  checkContinue: (
-    request: Http2ServerRequest,
-    response: Http2ServerResponse
-  ) => void;
-  request: (request: Http2ServerRequest, response: Http2ServerResponse) => void;
-  session: (session: ServerHttp2Session) => void;
-  unknownProtocol: (socket: TLSSocket) => void;
-}
-
+/** Add listeners to server's events. */
 export function on<T extends keyof Http2ServerEventMap>(
   event: T,
   listener: Http2ServerEventMap[T]
@@ -70,6 +55,7 @@ export function on<T extends keyof Http2ServerEventMap>(
   serverInstance.on(event, listener);
 }
 
+/** Sets timeout for response. */
 export function timeout(ms: number, callback?: VoidFunction): void {
   serverInstance.setTimeout(ms, callback);
 }

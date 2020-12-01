@@ -6,6 +6,7 @@ import {
   IncomingHttpStatusHeader,
 } from 'http2';
 
+/** Parses request body as `JSON` format. */
 export function json<T extends object>(
   stream: Http2Stream,
   headers: IncomingHttpHeaders & IncomingHttpStatusHeader

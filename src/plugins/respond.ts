@@ -3,6 +3,7 @@ import { existsSync } from 'fs';
 import { ContentTypeValue } from '../constants';
 import { constants, OutgoingHttpHeaders, ServerHttp2Stream } from 'http2';
 
+/** Sends headers to client and ends response. */
 export function headers(
   stream: ServerHttp2Stream,
   headers: OutgoingHttpHeaders = {}
@@ -10,6 +11,7 @@ export function headers(
   stream.respond(headers, { endStream: true });
 }
 
+/** Sends plain text to client. */
 export function text(
   stream: ServerHttp2Stream,
   payload: string,
@@ -23,6 +25,11 @@ export function text(
   stream.end(payload);
 }
 
+/**
+ * Sends JSON to client and ends response.
+ * By default `status` and `content-type` headers are set.
+ * You can override headers by providing own key/value pairs.
+ */
 export function json<T extends object>(
   stream: ServerHttp2Stream,
   payload: T,
@@ -37,6 +44,15 @@ export function json<T extends object>(
   stream.end(JSON.stringify(payload));
 }
 
+/**
+ * Sends file to client and ends response.
+ * By default `status`, `content-type` and `last-modified` headers are set
+ * and depends on file stats.
+ *
+ * @param path must be an absolute path to file.
+ *
+ * If file will not found, **404** response will be sent.
+ */
 export function file(
   stream: ServerHttp2Stream,
   path: string,

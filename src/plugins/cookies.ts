@@ -1,16 +1,5 @@
 import { isNothing } from '@fluss/core';
-
-interface Attributes {
-  Path?: string;
-  Domain?: string;
-  Secure?: boolean;
-  Expires?: string;
-  HttpOnly?: boolean;
-  SameSite?: 'Strict' | 'Lax' | 'None';
-  'Max-Age'?: number | string;
-}
-
-type Cookies = Attributes & { [key: string]: string | boolean };
+import type { Cookies } from '../types';
 
 const COOKIE_DELIMETER = '; ';
 
@@ -21,6 +10,7 @@ const defaultAttributes: Cookies = {
   HttpOnly: true,
 };
 
+/** Parses cookies from headers to JavaScript object. */
 export function parse(data: string): Cookies {
   return data.split(COOKIE_DELIMETER).reduce((cookieObject, pair) => {
     const [key, value] = pair.split('=');
@@ -31,6 +21,10 @@ export function parse(data: string): Cookies {
   }, {} as Cookies);
 }
 
+/**
+ * Creates cookie string from key/value pair
+ * and optional _attributes_ object.
+ */
 export function create(
   key: string,
   value: string,

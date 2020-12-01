@@ -8,22 +8,16 @@ import {
   IncomingHttpHeaders,
   IncomingHttpStatusHeader,
 } from 'http2';
+import type { FormDataDecoded, FormDataOptions } from '../../types';
 
-type FileData = {
-  mime: string;
-  path: string;
-  filename: string;
-  encoding: string;
-};
-
-export interface FormDataDecoded {
-  [index: string]: string | FileData;
-}
-
-interface FormDataOptions {
-  directory?: string;
-}
-
+/**
+ * Parses request with `multipart/form-data`.
+ * All files will be written to disk in _current
+ * working directory_. You can specify deeper path
+ * by providing **options.directory** field.
+ * @returns object with key/value pairs. Value can
+ * be either text data or object with file stats.
+ */
 export async function formData<T extends FormDataDecoded>(
   stream: Http2Stream,
   headers: IncomingHttpHeaders & IncomingHttpStatusHeader,

@@ -1,10 +1,7 @@
 import { constants } from 'http2';
-import type { Middleware } from './server';
+import type { Middleware, RouterOptions } from './types';
 
-type RouterOptions = {
-  prefix?: string;
-};
-
+/** Holds parameters of current path. */
 export let parameters: RegExpMatchArray = [];
 
 class Router {
@@ -62,8 +59,9 @@ class Router {
 
   private _method(method: string, path: string, handler: Middleware): this {
     const unboundedPath = removeBounds(path);
-		const fullPath = addBounds(
-      this.#prefix + (unboundedPath.endsWith('/') ? `${unboundedPath}?` : unboundedPath)
+    const fullPath = addBounds(
+      this.#prefix +
+        (unboundedPath.endsWith('/') ? `${unboundedPath}?` : unboundedPath)
     );
 
     this.#routes.set(fullPath, (path: string) => (stream, headers, flags) => {
@@ -82,16 +80,19 @@ class Router {
 
 export type { Router };
 
+/** Creates `Router` instance. */
 export function create(options: RouterOptions = {}): Router {
   return new Router(options);
 }
 
 function addBounds(path: string): string {
-	let boundedPath = path.startsWith('^') ? path : `^${path}`;
-	return boundedPath.endsWith('$') ? boundedPath : `${boundedPath}$`;
+  let boundedPath = path.startsWith('^') ? path : `^${path}`;
+  return boundedPath.endsWith('$') ? boundedPath : `${boundedPath}$`;
 }
 
 function removeBounds(path: string): string {
-	let unboundedPath = path.startsWith('^') ? path.slice(1) : path;
-  return unboundedPath.endsWith('$') ? unboundedPath.slice(0, unboundedPath.length - 1) : unboundedPath;
+  let unboundedPath = path.startsWith('^') ? path.slice(1) : path;
+  return unboundedPath.endsWith('$')
+    ? unboundedPath.slice(0, unboundedPath.length - 1)
+    : unboundedPath;
 }

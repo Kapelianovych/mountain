@@ -3,21 +3,20 @@ import { json, text, urlencoded, formData } from './plugins/body/body';
 import {
   connect,
   constants,
-  Http2Stream,
-  Http2Session,
   ClientHttp2Stream,
   ClientHttp2Session,
-  IncomingHttpHeaders,
-  OutgoingHttpHeaders,
-  IncomingHttpStatusHeader,
   SecureClientSessionOptions,
-  ClientSessionRequestOptions,
 } from 'http2';
-import type { Socket } from 'net';
-import type { FormDataDecoded } from './plugins/body/form_data';
+import type {
+  RequestOptions,
+  FormDataDecoded,
+  ClientHttp2Response,
+  ClientHttp2SessionEventMap,
+} from './types';
 
 let client: ClientHttp2Session;
 
+/** Opens connection with remote peer. */
 export function open(
   autority: string | URL,
   options?: SecureClientSessionOptions
@@ -25,29 +24,15 @@ export function open(
   client = connect(autority, options);
 }
 
-interface Body {
-  text(): Promise<string>;
-  json<T extends object>(): Promise<T>;
-  urlencoded<T extends Record<string, string>>(): Promise<T>;
-  formData<T extends FormDataDecoded>(): Promise<T>;
-}
-
-interface Response {
-  headers: IncomingHttpHeaders & IncomingHttpStatusHeader;
-  body: Body;
-}
-
-interface RequestOptions<T> {
-  headers?: OutgoingHttpHeaders;
-  payload?: T;
-  options?: ClientSessionRequestOptions;
-}
-
+/**
+ * Makes a request to remote peer on opened connection.
+ * By default it performs **GET** request to _path_ URL.
+ */
 export async function request<T = any>(
   path: string,
   options: RequestOptions<T> = {}
-): Promise<Response> {
-  return new Promise<Response>((resolve, reject) => {
+): Promise<ClientHttp2Response> {
+  return new Promise<ClientHttp2Response>((resolve, reject) => {
     const stream: ClientHttp2Stream = client
       .request(
         {
@@ -82,31 +67,9 @@ export async function request<T = any>(
   });
 }
 
+/** Closes connection with remote peer. */
 export function close(callback?: VoidFunction): void {
   client.close(callback);
-}
-
-interface Http2SessionEventMap {
-  close: VoidFunction;
-  connect: (session: Http2Session, socket: Socket) => void;
-  error: (error: Error) => void;
-  frameError: (type: number, code: number, id: number) => void;
-  goaway: (errorCode: number, lastStreamID: number, opaqueData: Buffer) => void;
-  localSettings: (settings: SecureClientSessionOptions) => void;
-  remoteSettings: (settings: SecureClientSessionOptions) => void;
-  ping: (payload: Buffer) => void;
-  stream: (
-    stream: Http2Stream,
-    headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
-    flags: number,
-    rawHeaders: ReadonlyArray<string>
-  ) => void;
-  timeout: VoidFunction;
-}
-
-interface ClientHttp2SessionEventMap extends Http2SessionEventMap {
-  altsvc: (alt: string, origin: string, streamId: number) => void;
-  origin: (origins: Array<string>) => void;
 }
 
 export function on<T extends keyof ClientHttp2SessionEventMap>(

@@ -2,7 +2,10 @@
   "compilerOptions": {
     "strict": true,
     "target": "ES2018",
+    "rootDir": "src",
+    "declaration": true,
     "noImplicitAny": true,
+    "declarationDir": "build",
     "strictNullChecks": true,
     "moduleResolution": "node",
     "strictFunctionTypes": true,
