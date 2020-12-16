@@ -1,7 +1,7 @@
-import { isNothing } from '@fluss/core';
 import type { Cookies } from '../types';
 
 const COOKIE_DELIMETER = '; ';
+const COOKIE_PAIR_DELIMETER = '=';
 
 const defaultAttributes: Cookies = {
   Path: '/',
@@ -13,10 +13,9 @@ const defaultAttributes: Cookies = {
 /** Parses cookies from headers to JavaScript object. */
 export function parse(data: string): Cookies {
   return data.split(COOKIE_DELIMETER).reduce((cookieObject, pair) => {
-    const [key, value] = pair.split('=');
-    cookieObject[decodeURIComponent(key)] = isNothing(value)
-      ? true
-      : decodeURIComponent(value);
+    const [key, value] = pair.split(COOKIE_PAIR_DELIMETER);
+    cookieObject[decodeURIComponent(key)] =
+      value === undefined ? true : decodeURIComponent(value);
     return cookieObject;
   }, {} as Cookies);
 }
@@ -33,9 +32,13 @@ export function create(
   return Object.entries({ ...defaultAttributes, ...attributes }).reduce(
     (data, [key, value]) => {
       return `${data}${COOKIE_DELIMETER}${encodeURIComponent(key)}${
-        value === true ? '' : `=${encodeURIComponent(value)}`
+        value === true
+          ? ''
+          : `${COOKIE_PAIR_DELIMETER}${encodeURIComponent(value)}`
       }`;
     },
-    `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+    `${encodeURIComponent(key)}${COOKIE_PAIR_DELIMETER}${encodeURIComponent(
+      value
+    )}`
   );
 }

@@ -1,70 +1,70 @@
 import { constants } from 'http2';
-import type { Middleware, RouterOptions } from './types';
+import type { Handler, RouterOptions } from './types';
 
 /** Holds parameters of current path. */
 export let parameters: RegExpMatchArray = [];
 
 class Router {
-  #prefix: string = '';
-  #routes: Map<string, (path: string) => Middleware> = new Map();
+  private readonly _prefix: string = '';
+  private readonly _routes: Map<string, (path: string) => Handler> = new Map();
 
   constructor(options: RouterOptions = {}) {
-    this.#prefix = options.prefix ?? '';
+    this._prefix = options.prefix ?? '';
   }
 
-  get routes(): ReadonlyMap<string, (path: string) => Middleware> {
-    return this.#routes;
+  get routes(): ReadonlyMap<string, (path: string) => Handler> {
+    return this._routes;
   }
 
-  get middlewares(): ReadonlyArray<Middleware> {
-    return Array.from(this.#routes.entries()).map(([path, getMiddlewareFor]) =>
-      getMiddlewareFor(path)
+  get handlers(): ReadonlyArray<Handler> {
+    return Array.from(this._routes).map(([path, getHandlerFor]) =>
+      getHandlerFor(path)
     );
   }
 
-  head(path: string, handler: Middleware): this {
+  head(path: string, handler: Handler): this {
     return this._method(constants.HTTP2_METHOD_HEAD, path, handler);
   }
 
-  options(path: string, handler: Middleware): this {
+  options(path: string, handler: Handler): this {
     return this._method(constants.HTTP2_METHOD_OPTIONS, path, handler);
   }
 
-  get(path: string, handler: Middleware): this {
+  get(path: string, handler: Handler): this {
     return this._method(constants.HTTP2_METHOD_GET, path, handler);
   }
 
-  post(path: string, handler: Middleware): this {
+  post(path: string, handler: Handler): this {
     return this._method(constants.HTTP2_METHOD_POST, path, handler);
   }
 
-  put(path: string, handler: Middleware): this {
+  put(path: string, handler: Handler): this {
     return this._method(constants.HTTP2_METHOD_PUT, path, handler);
   }
 
-  delete(path: string, handler: Middleware): this {
+  delete(path: string, handler: Handler): this {
     return this._method(constants.HTTP2_METHOD_DELETE, path, handler);
   }
 
   merge(router: Router): this {
-    router.routes.forEach((getMiddlewareFor, path) => {
-      this.#routes.set(
-        addBounds(this.#prefix + removeBounds(path)),
-        getMiddlewareFor
+    router.routes.forEach((getHandlerFor, path) => {
+      this._routes.set(
+        addBounds(this._prefix + removeBounds(path)),
+        getHandlerFor
       );
     });
 
     return this;
   }
 
-  private _method(method: string, path: string, handler: Middleware): this {
+  private _method(method: string, path: string, handler: Handler): this {
     const unboundedPath = removeBounds(path);
     const fullPath = addBounds(
-      this.#prefix +
+      this._prefix +
         (unboundedPath.endsWith('/') ? `${unboundedPath}?` : unboundedPath)
     );
 
-    this.#routes.set(fullPath, (path: string) => (stream, headers, flags) => {
+    this._routes.set(fullPath, (path: string) => (stream, headers, flags) => {
       const requestMethod = headers[constants.HTTP2_HEADER_METHOD] as string;
       const requestPath = headers[constants.HTTP2_HEADER_PATH] as string;
 

@@ -3,7 +3,12 @@
   "version": "0.5.0",
   "description": "Yet another server and client. For creating HTTP/2 servers and clients.",
   "type": "module",
-  "main": "index.js",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./index": "./index.js",
+    "./index.js": "./index.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/YevhenKap/mountain"
@@ -28,19 +33,17 @@
   "author": "Kapelianovych Yevhen",
   "license": "MIT",
   "dependencies": {
-    "@fluss/core": "^0.9.1",
     "busboy": "^0.3.1",
     "mime": "^2.4.6"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "^8.0.0",
+    "@rollup/plugin-typescript": "^8.1.0",
     "@types/busboy": "^0.2.3",
-    "@types/formidable": "^1.0.31",
     "@types/mime": "^2.0.3",
-    "@types/node": "^14.14.10",
-    "rollup": "^2.34.0",
+    "@types/node": "^14.14.14",
+    "rollup": "^2.35.1",
     "rollup-plugin-terser": "^7.0.2",
     "tslib": "^2.0.3",
-    "typescript": "^4.1.2"
+    "typescript": "^4.1.3"
   }
 }

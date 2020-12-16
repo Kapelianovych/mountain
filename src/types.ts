@@ -3,6 +3,7 @@ import type { TLSSocket } from 'tls';
 import type {
   Http2Stream,
   Http2Session,
+  ClientHttp2Stream,
   ServerHttp2Stream,
   Http2ServerRequest,
   ServerHttp2Session,
@@ -18,7 +19,7 @@ export type RouterOptions = {
   prefix?: string;
 };
 
-export type Middleware = (
+export type Handler = (
   stream: ServerHttp2Stream,
   headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
   flags: number
@@ -26,7 +27,7 @@ export type Middleware = (
 
 export interface Http2ServerEventMap {
   sessionError: (error: Error) => void;
-  stream: Middleware;
+  stream: Handler;
   timeout: VoidFunction;
   checkContinue: (
     request: Http2ServerRequest,
@@ -60,16 +61,10 @@ export interface ClientHttp2SessionEventMap extends Http2SessionEventMap {
   origin: (origins: Array<string>) => void;
 }
 
-export interface ClientHttp2ResponseBody {
-  text(): Promise<string>;
-  json<T extends object>(): Promise<T>;
-  urlencoded<T extends Record<string, string>>(): Promise<T>;
-  formData<T extends FormDataDecoded>(): Promise<T>;
-}
-
 export interface ClientHttp2Response {
+  flags: number;
+  stream: ClientHttp2Stream;
   headers: IncomingHttpHeaders & IncomingHttpStatusHeader;
-  body: ClientHttp2ResponseBody;
 }
 
 export interface RequestOptions<T> {

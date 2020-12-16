@@ -4,11 +4,11 @@ import {
   SecureServerOptions,
 } from 'http2';
 import type { Router } from './router';
-import type { Http2ServerEventMap, Middleware } from './types';
+import type { Http2ServerEventMap, Handler } from './types';
 
 let serverInstance: Http2SecureServer;
 
-const middlewares: Array<Middleware> = [];
+const handlers: Array<Handler> = [];
 
 /**
  * Initializes secure server.
@@ -21,10 +21,10 @@ export function init(options: SecureServerOptions): void {
 }
 
 /** Registers handlers for incoming requests. */
-export function use(handler: Middleware | Router): void {
+export function use(handler: Handler | Router): void {
   typeof handler === 'function'
-    ? middlewares.push(handler)
-    : handler.middlewares.forEach((middleware) => middlewares.push(middleware));
+    ? handlers.push(handler)
+    : handler.handlers.forEach((fn) => handlers.push(fn));
 }
 
 /** Starts server. */
@@ -37,7 +37,10 @@ export function listen(
 ): void {
   serverInstance
     .on('stream', (stream, headers, flags) => {
-      middlewares.forEach((fn) => fn(stream, headers, flags));
+      // We can call multiple handlers per one request
+      // to make unrelated jobs, but only one handler
+      // must send reponse to client.
+      handlers.forEach((fn) => fn(stream, headers, flags));
     })
     .listen(port, host, listeningListener);
 }

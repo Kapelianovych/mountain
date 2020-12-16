@@ -1,5 +1,3 @@
-import { isNothing } from '@fluss/core';
-import { json, text, urlencoded, formData } from './plugins/body/body';
 import {
   connect,
   constants,
@@ -9,7 +7,6 @@ import {
 } from 'http2';
 import type {
   RequestOptions,
-  FormDataDecoded,
   ClientHttp2Response,
   ClientHttp2SessionEventMap,
 } from './types';
@@ -42,23 +39,11 @@ export async function request<T = any>(
         },
         options.options
       )
-      .on('response', (headers) =>
+      .on('response', (headers, flags) =>
         resolve({
+          flags,
+          stream,
           headers,
-          body: {
-            text(): Promise<string> {
-              return text(stream);
-            },
-            json<T extends object>(): Promise<T> {
-              return json<T>(stream, headers);
-            },
-            urlencoded<T extends Record<string, string>>(): Promise<T> {
-              return urlencoded<T>(stream, headers);
-            },
-            formData<T extends FormDataDecoded>(): Promise<T> {
-              return formData<T>(stream, headers);
-            },
-          },
         })
       )
       .on('error', reject);
@@ -88,5 +73,5 @@ export function isClosed(): boolean {
    * If client is undefined, it is the same as
    * connection is closed.
    */
-  return isNothing(client) || client.closed;
+  return client === undefined || client.closed;
 }
