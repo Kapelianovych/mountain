@@ -8,9 +8,10 @@ export default {
   output: {
     dir: 'build',
     format: 'es',
+    sourcemap: true,
     preserveModules: true,
     preserveModulesRoot: SOURCE_DIR_NAME,
   },
   plugins: [typescript(), terser()],
-  external: ['mime', 'http2', 'path', 'fs', 'busboy'],
+  external: ['mime', 'http2', 'path', 'fs', 'busboy', 'querystring'],
 };

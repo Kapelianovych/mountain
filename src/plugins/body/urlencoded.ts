@@ -1,3 +1,4 @@
+import { parse } from 'querystring';
 import { ContentTypeValue } from '../../constants';
 import {
   constants,
@@ -5,9 +6,6 @@ import {
   IncomingHttpHeaders,
   IncomingHttpStatusHeader,
 } from 'http2';
-
-const URL_DELIMETER = '&';
-const PAIR_DELIMETER = '=';
 
 /**
  * Parses request with `application/x-www-form-urlencoded`.
@@ -39,15 +37,5 @@ export async function urlencoded<T extends Record<string, string>>(
       .on('error', reject)
       .on('data', chunks.push.bind(chunks))
       .on('end', () => resolve(chunks.join('')));
-  }).then((result) => parse(result) as T);
-}
-
-function parse(data: string): Record<string, string> {
-  return data
-    .split(URL_DELIMETER)
-    .map((pair) => pair.split(PAIR_DELIMETER))
-    .reduce((obj, [key, value]) => {
-      obj[decodeURIComponent(key)] = decodeURIComponent(value);
-      return obj;
-    }, {} as Record<string, string>);
+  }).then((result) => ({ ...parse(result) } as T));
 }
