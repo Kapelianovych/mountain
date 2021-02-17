@@ -5,9 +5,9 @@ const COOKIE_PAIR_DELIMETER = '=';
 
 const defaultAttributes: Cookies = {
   Path: '/',
-  SameSite: 'Strict',
   Secure: true,
   HttpOnly: true,
+  SameSite: 'Strict',
 };
 
 /** Parses cookies from headers to JavaScript object. */
@@ -23,6 +23,13 @@ export function parse(data: string): Cookies {
 /**
  * Creates cookie string from key/value pair
  * and optional _attributes_ object.
+ *
+ * By default, `Path` attribute is set to **\/** URL.
+ * That means all requests to server will include that cookie.
+ * It is recommended to set `Path` attribute manually.
+ *
+ * Also by default `Secure`, `HttpOnly` and `SameSite=Strict`
+ * attributes are defined.
  */
 export function create(
   key: string,
