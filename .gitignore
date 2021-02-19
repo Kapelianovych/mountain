@@ -1,4 +1,5 @@
 .DS_Store
-node_modules/
-build/
-certs/
+.vscode
+build
+certs
+node_modules
