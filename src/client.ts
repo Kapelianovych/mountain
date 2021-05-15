@@ -3,75 +3,92 @@ import {
   constants,
   ClientHttp2Stream,
   ClientHttp2Session,
+  IncomingHttpHeaders,
+  OutgoingHttpHeaders,
+  IncomingHttpStatusHeader,
   SecureClientSessionOptions,
+  ClientSessionRequestOptions,
 } from 'http2';
-import type {
-  RequestOptions,
-  ClientHttp2Response,
-  ClientHttp2SessionEventMap,
-} from './types';
 
-let client: ClientHttp2Session;
+import { Http2SessionEventMap } from './types';
 
-/** Opens connection with remote peer. */
-export function open(
+export interface ClientHttp2SessionEventMap extends Http2SessionEventMap {
+  altsvc: (alt: string, origin: string, streamId: number) => void;
+  origin: (origins: Array<string>) => void;
+}
+
+export interface ClientHttp2Response {
+  flags: number;
+  stream: ClientHttp2Stream;
+  headers: IncomingHttpHeaders & IncomingHttpStatusHeader;
+}
+
+export interface Client {
+  readonly closed: boolean;
+
+  body: (chunk: string) => Client;
+  header: (name: string, value: string) => Client;
+  /**
+   * Makes a request to remote peer on opened connection.
+   * By default it performs **GET** request to _path_ URL.
+   */
+  request: (
+    path: string,
+    options?: ClientSessionRequestOptions
+  ) => Promise<ClientHttp2Response>;
+  /** Closes connection with remote peer. */
+  close: (callback?: VoidFunction) => void;
+  on: <T extends keyof ClientHttp2SessionEventMap>(
+    event: T,
+    listener: ClientHttp2SessionEventMap[T]
+  ) => Client;
+}
+
+const createClient = (
+  instance: ClientHttp2Session,
+  headers: OutgoingHttpHeaders,
+  payload: ReadonlyArray<string>
+): Client => ({
+  get closed(): boolean {
+    return instance.closed;
+  },
+
+  on: (event, listener) =>
+    createClient(instance.on(event, listener), headers, payload),
+
+  header: (name, value) =>
+    createClient(instance, { ...headers, [name]: value }, payload),
+
+  body: (chunk) => createClient(instance, headers, payload.concat(chunk)),
+
+  request: (path, options) =>
+    new Promise<ClientHttp2Response>((resolve, reject) => {
+      const stream: ClientHttp2Stream = instance
+        .request(
+          {
+            [constants.HTTP2_HEADER_PATH]: path,
+            [constants.HTTP2_HEADER_METHOD]: constants.HTTP2_METHOD_GET,
+            ...headers,
+          },
+          options
+        )
+        .on('response', (headers, flags) =>
+          resolve({
+            flags,
+            stream,
+            headers,
+          })
+        )
+        .on('error', reject);
+
+      payload.forEach((chunk) => stream.write(chunk));
+      stream.end();
+    }),
+
+  close: (callback) => instance.close(callback),
+});
+
+export const client = (
   autority: string | URL,
   options?: SecureClientSessionOptions
-): void {
-  client = connect(autority, options);
-}
-
-/**
- * Makes a request to remote peer on opened connection.
- * By default it performs **GET** request to _path_ URL.
- */
-export async function request<T = any>(
-  path: string,
-  options: RequestOptions<T> = {}
-): Promise<ClientHttp2Response> {
-  return new Promise<ClientHttp2Response>((resolve, reject) => {
-    const stream: ClientHttp2Stream = client
-      .request(
-        {
-          [constants.HTTP2_HEADER_PATH]: path,
-          [constants.HTTP2_HEADER_METHOD]: constants.HTTP2_METHOD_GET,
-          ...options.headers,
-        },
-        options.options
-      )
-      .on('response', (headers, flags) =>
-        resolve({
-          flags,
-          stream,
-          headers,
-        })
-      )
-      .on('error', reject);
-
-    stream.end(options.payload);
-  });
-}
-
-/** Closes connection with remote peer. */
-export function close(callback?: VoidFunction): void {
-  client.close(callback);
-}
-
-export function on<T extends keyof ClientHttp2SessionEventMap>(
-  event: T,
-  listener: ClientHttp2SessionEventMap[T]
-): void {
-  client.on(event, listener);
-}
-
-export function timeout(ms: number, callback?: VoidFunction): void {
-  client.setTimeout(ms, callback);
-}
-
-export function isClosed(): boolean {
-  /**
-   * If client is undefined, it is the same as
-   * connection is closed.
-   */
-  return client === undefined || client.closed;
-}
+): Client => createClient(connect(autority, options), {}, []);

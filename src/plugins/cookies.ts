@@ -1,4 +1,14 @@
-import type { Cookies } from '../types';
+export interface Attributes {
+  readonly Path?: string;
+  readonly Domain?: string;
+  readonly Secure?: boolean;
+  readonly Expires?: string;
+  readonly HttpOnly?: boolean;
+  readonly SameSite?: 'Strict' | 'Lax' | 'None';
+  readonly 'Max-Age'?: number | string;
+}
+
+export type Cookies = Attributes & { [key: string]: string | boolean };
 
 const COOKIE_DELIMETER = '; ';
 const COOKIE_PAIR_DELIMETER = '=';
@@ -11,14 +21,13 @@ const defaultAttributes: Cookies = {
 };
 
 /** Parses cookies from headers to JavaScript object. */
-export function parse(data: string): Cookies {
-  return data.split(COOKIE_DELIMETER).reduce((cookieObject, pair) => {
+export const parse = (data: string): Cookies =>
+  data.split(COOKIE_DELIMETER).reduce((cookieObject, pair) => {
     const [key, value] = pair.split(COOKIE_PAIR_DELIMETER);
     cookieObject[decodeURIComponent(key)] =
       value === undefined ? true : decodeURIComponent(value);
     return cookieObject;
   }, {} as Cookies);
-}
 
 /**
  * Creates cookie string from key/value pair
@@ -31,21 +40,19 @@ export function parse(data: string): Cookies {
  * Also by default `Secure`, `HttpOnly` and `SameSite=Strict`
  * attributes are defined.
  */
-export function create(
+export const create = (
   key: string,
   value: string,
   attributes: Cookies = {}
-): string {
-  return Object.entries({ ...defaultAttributes, ...attributes }).reduce(
-    (data, [key, value]) => {
-      return `${data}${COOKIE_DELIMETER}${encodeURIComponent(key)}${
+): string =>
+  Object.entries({ ...defaultAttributes, ...attributes }).reduce(
+    (data, [key, value]) =>
+      `${data}${COOKIE_DELIMETER}${encodeURIComponent(key)}${
         value === true
           ? ''
           : `${COOKIE_PAIR_DELIMETER}${encodeURIComponent(value)}`
-      }`;
-    },
+      }`,
     `${encodeURIComponent(key)}${COOKIE_PAIR_DELIMETER}${encodeURIComponent(
       value
     )}`
   );
-}

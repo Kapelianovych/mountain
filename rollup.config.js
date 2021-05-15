@@ -13,5 +13,5 @@ export default {
     preserveModulesRoot: SOURCE_DIR_NAME,
   },
   plugins: [typescript(), terser()],
-  external: ['mime', 'http2', 'path', 'fs', 'busboy', 'querystring'],
+  external: ['mime', 'http2', 'path', 'fs', 'busboy'],
 };

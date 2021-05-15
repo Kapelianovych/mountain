@@ -3,21 +3,14 @@ import type { TLSSocket } from 'tls';
 import type {
   Http2Stream,
   Http2Session,
-  ClientHttp2Stream,
   ServerHttp2Stream,
   Http2ServerRequest,
   ServerHttp2Session,
   IncomingHttpHeaders,
   Http2ServerResponse,
-  OutgoingHttpHeaders,
   IncomingHttpStatusHeader,
   SecureClientSessionOptions,
-  ClientSessionRequestOptions,
 } from 'http2';
-
-export type RouterOptions = {
-  prefix?: string;
-};
 
 export type Handler = (
   stream: ServerHttp2Stream,
@@ -56,40 +49,11 @@ export interface Http2SessionEventMap {
   timeout: VoidFunction;
 }
 
-export interface ClientHttp2SessionEventMap extends Http2SessionEventMap {
-  altsvc: (alt: string, origin: string, streamId: number) => void;
-  origin: (origins: Array<string>) => void;
-}
-
-export interface ClientHttp2Response {
-  flags: number;
-  stream: ClientHttp2Stream;
-  headers: IncomingHttpHeaders & IncomingHttpStatusHeader;
-}
-
-export interface RequestOptions<T> {
-  headers?: OutgoingHttpHeaders;
-  payload?: T;
-  options?: ClientSessionRequestOptions;
-}
-
-export interface Attributes {
-  Path?: string;
-  Domain?: string;
-  Secure?: boolean;
-  Expires?: string;
-  HttpOnly?: boolean;
-  SameSite?: 'Strict' | 'Lax' | 'None';
-  'Max-Age'?: number | string;
-}
-
-export type Cookies = Attributes & { [key: string]: string | boolean };
-
 export type FileData = {
-  mime: string;
-  path: string;
-  filename: string;
-  encoding: string;
+  readonly mime: string;
+  readonly path: string;
+  readonly filename: string;
+  readonly encoding: string;
 };
 
 export interface FormDataDecoded {
@@ -97,5 +61,5 @@ export interface FormDataDecoded {
 }
 
 export interface FormDataOptions {
-  directory?: string;
+  readonly directory?: string;
 }

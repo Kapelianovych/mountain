@@ -1,14 +1,16 @@
 import path from 'path';
-import Busboy from 'busboy';
 import { appendFileSync } from 'fs';
-import { ContentTypeValue } from '../../constants';
 import {
   constants,
   Http2Stream,
   IncomingHttpHeaders,
   IncomingHttpStatusHeader,
 } from 'http2';
-import type { FormDataDecoded, FormDataOptions } from '../../types';
+
+import Busboy from 'busboy';
+
+import { ContentType } from '../../constants';
+import { FormDataDecoded, FormDataOptions } from '../../types';
 
 /**
  * Parses request with `multipart/form-data`.
@@ -18,24 +20,24 @@ import type { FormDataDecoded, FormDataOptions } from '../../types';
  * @returns object with key/value pairs. Value can
  * be either text data or object with file stats.
  */
-export async function formData<T extends FormDataDecoded>(
+export const formData = <T extends FormDataDecoded>(
   stream: Http2Stream,
   headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
   options: FormDataOptions = {}
-): Promise<T> {
-  const contentTypeHeaderValue =
-    headers[constants.HTTP2_HEADER_CONTENT_TYPE] ?? '';
+): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const contentTypeHeaderValue =
+      headers[constants.HTTP2_HEADER_CONTENT_TYPE] ?? '';
 
-  return new Promise<T>((resolve, reject) => {
     const formDataResponse = {} as FormDataDecoded;
 
     if (
       // Content-Type can contain charset and boundary fields.
-      !contentTypeHeaderValue.includes(ContentTypeValue.MULTIPART_FORM_DATA)
+      !contentTypeHeaderValue.includes(ContentType.MULTIPART_FORM_DATA)
     ) {
       reject(
         new Error(
-          `Unexpected Content-Type - "${contentTypeHeaderValue}". Expected "${ContentTypeValue.MULTIPART_FORM_DATA}"`
+          `Unexpected Content-Type - "${contentTypeHeaderValue}". Expected "${ContentType.MULTIPART_FORM_DATA}"`
         )
       );
     }
@@ -76,4 +78,3 @@ export async function formData<T extends FormDataDecoded>(
       reject(error);
     }
   });
-}

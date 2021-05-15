@@ -1,4 +1,4 @@
-export enum ContentTypeValue {
+export enum ContentType {
   TEXT = 'text/plain',
   JSON = 'application/json',
   FORM_URLENCODED = 'application/x-www-form-urlencoded',

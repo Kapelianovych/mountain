@@ -1,14 +1,75 @@
 import {
+  constants,
+  ServerHttp2Stream,
   Http2SecureServer,
   createSecureServer,
+  IncomingHttpHeaders,
   SecureServerOptions,
 } from 'http2';
-import type { Router } from './router';
-import type { Http2ServerEventMap, Handler } from './types';
 
-let serverInstance: Http2SecureServer;
+import { Route } from './controllers';
+import { request } from './plugins/request';
+import { response } from './plugins/response';
+import { Http2ServerEventMap } from './types';
 
-const handlers: Array<Handler> = [];
+export interface Server {
+  /** Adds listeners to stream's events. */
+  on: <T extends keyof Http2ServerEventMap>(
+    event: T,
+    listener: Http2ServerEventMap[T]
+  ) => Server;
+  /** Adds routes to server.  */
+  use: (...routes: ReadonlyArray<Route>) => Server;
+  /** Stops the server from establishing new sessions */
+  close: (callback?: (error?: Error) => void) => Server;
+  /** Starts the server listening to requests. */
+  listen: (port?: number, host?: string, listerner?: VoidFunction) => Server;
+}
+
+const app = (
+  routes: ReadonlyArray<Route>,
+  serverInstance: Http2SecureServer
+): Server => ({
+  on: (event, listener) => app(routes, serverInstance.on(event, listener)),
+  use: (...routes: ReadonlyArray<Route>) =>
+    app(routes.concat(routes), serverInstance),
+  listen: (
+    port: number = 3333,
+    host: string = 'localhost',
+    listener?: VoidFunction
+  ) =>
+    app(
+      routes,
+      serverInstance
+        .on(
+          'stream',
+          (
+            stream: ServerHttp2Stream,
+            headers: IncomingHttpHeaders,
+            flags: number
+          ) => {
+            const requestPath = request(stream, headers).path;
+            const incomingMethod = request(stream, headers).method;
+
+            const handler = routes.find(
+              ({ method, path }) =>
+                method === incomingMethod && new RegExp(path).test(requestPath)
+            );
+            handler !== undefined
+              ? handler.handle(stream, headers, flags)
+              : response(stream)
+                  .header(
+                    constants.HTTP2_HEADER_STATUS,
+                    String(constants.HTTP_STATUS_NOT_FOUND)
+                  )
+                  .end();
+          }
+        )
+        .listen(port, host, listener)
+    ),
+  close: (callback?: (error?: Error) => void) =>
+    app(routes, serverInstance.close(callback)),
+});
 
 /**
  * Initializes secure server.
@@ -16,49 +77,5 @@ const handlers: Array<Handler> = [];
  * If _options.allowHttp1_: _true_ then also add listener
  * to `request` event.
  */
-export function init(options: SecureServerOptions): void {
-  serverInstance = createSecureServer(options);
-}
-
-/** Registers handlers for incoming requests. */
-export function use(handler: Handler | Router): void {
-  typeof handler === 'function'
-    ? handlers.push(handler)
-    : handler.handlers.forEach((fn) => handlers.push(fn));
-}
-
-/** Starts server. */
-export function listen(
-  port: number = 3333,
-  host: string = 'localhost',
-  listeningListener: VoidFunction = () => {
-    console.log(`Server started at ${host}:${port}`);
-  }
-): void {
-  serverInstance
-    .on('stream', (stream, headers, flags) => {
-      // We can call multiple handlers per one request
-      // to make unrelated jobs, but only one handler
-      // must send reponse to client.
-      handlers.forEach((fn) => fn(stream, headers, flags));
-    })
-    .listen(port, host, listeningListener);
-}
-
-/** Closes server. */
-export function close(callback?: (error?: Error) => void): void {
-  serverInstance.close(callback);
-}
-
-/** Add listeners to server's events. */
-export function on<T extends keyof Http2ServerEventMap>(
-  event: T,
-  listener: Http2ServerEventMap[T]
-): void {
-  serverInstance.on(event, listener);
-}
-
-/** Sets timeout for response. */
-export function timeout(ms: number, callback?: VoidFunction): void {
-  serverInstance.setTimeout(ms, callback);
-}
+export const server = (options: SecureServerOptions): Server =>
+  app([], createSecureServer(options));

@@ -1,6 +1,22 @@
-# [0.5.0] - 2020-10-28
+# [1.0.0-alpha.1] - 2021-05-15
 
 Completely rewrite package with TypeScript with absolutely new API.
+
+### Added 
+
+- `cookies` object for parsing and creating cookies.
+- `response` function for creating `Response` object.
+- `request` function for getting basic information about request.
+- `files` controller for managing static assets.
+
+### Changed
+
+- server creation is done by `server` function.
+- client creation is done by `client` function.
+
+### Removed
+
+- `Router` class.
 
 ## 0.4.0
 
