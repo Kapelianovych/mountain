@@ -46,11 +46,7 @@ export const formData = <T extends FormDataDecoded>(
       stream.pipe(
         new Busboy({ headers })
           .on('file', (fieldname, file, filename, encoding, mime) => {
-            const filePath = path.resolve(
-              process.cwd(),
-              options.directory ?? '',
-              filename
-            );
+            const filePath = path.resolve(options.directory ?? '', filename);
 
             file
               .on('data', (chunk: Buffer) => {

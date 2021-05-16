@@ -3,25 +3,34 @@ import { constants, OutgoingHttpHeaders, ServerHttp2Stream } from 'http2';
 
 import mime from 'mime';
 
+import { Request } from '../types';
 import { ContentType } from '../constants';
 
-export interface Response {
+export interface ResponseBuilder {
+  /** Sends response to client. */
   end: () => void;
-  body: (text: string) => Response;
+  /** Define chunks of body to be sent to client. */
+  body: (chunk: string) => ResponseBuilder;
+  /** Sends JSON to client. */
   json: (payload: object) => void;
+  /**
+   * Sends file to client. _path_ should be an
+   * absolute path to file.
+   */
   file: (path: string) => void;
-  header: (name: string, value: string) => Response;
+  /** Define a header for response. */
+  header: (name: string, value: string) => ResponseBuilder;
 }
 
 const createResponse = (
   stream: ServerHttp2Stream,
   headers: OutgoingHttpHeaders,
   body: ReadonlyArray<string>
-): Response => ({
+): ResponseBuilder => ({
   header: (name, value) =>
     createResponse(stream, { ...headers, [name]: value }, body),
 
-  body: (text) => createResponse(stream, headers, body.concat(text)),
+  body: (chunk) => createResponse(stream, headers, body.concat(chunk)),
 
   json: (payload) => {
     stream.respond({
@@ -69,10 +78,10 @@ const createResponse = (
         : {}),
       ...headers,
     });
-    body.forEach((text) => stream.write(text));
+    body.forEach((chunk) => stream.write(chunk));
     stream.end();
   },
 });
 
-export const response = (stream: ServerHttp2Stream): Response =>
+export const responseFor = ({ stream }: Request): ResponseBuilder =>
   createResponse(stream, {}, []);

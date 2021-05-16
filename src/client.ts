@@ -3,24 +3,16 @@ import {
   constants,
   ClientHttp2Stream,
   ClientHttp2Session,
-  IncomingHttpHeaders,
   OutgoingHttpHeaders,
-  IncomingHttpStatusHeader,
   SecureClientSessionOptions,
   ClientSessionRequestOptions,
 } from 'http2';
 
-import { Http2SessionEventMap } from './types';
+import { Http2SessionEventMap, Response } from './types';
 
 export interface ClientHttp2SessionEventMap extends Http2SessionEventMap {
   altsvc: (alt: string, origin: string, streamId: number) => void;
   origin: (origins: Array<string>) => void;
-}
-
-export interface ClientHttp2Response {
-  flags: number;
-  stream: ClientHttp2Stream;
-  headers: IncomingHttpHeaders & IncomingHttpStatusHeader;
 }
 
 export interface Client {
@@ -28,6 +20,9 @@ export interface Client {
 
   body: (chunk: string) => Client;
   header: (name: string, value: string) => Client;
+
+  /** Removes headers and body from previous request. */
+  fresh: () => Client;
   /**
    * Makes a request to remote peer on opened connection.
    * By default it performs **GET** request to _path_ URL.
@@ -35,7 +30,7 @@ export interface Client {
   request: (
     path: string,
     options?: ClientSessionRequestOptions
-  ) => Promise<ClientHttp2Response>;
+  ) => Promise<Response>;
   /** Closes connection with remote peer. */
   close: (callback?: VoidFunction) => void;
   on: <T extends keyof ClientHttp2SessionEventMap>(
@@ -61,8 +56,10 @@ const createClient = (
 
   body: (chunk) => createClient(instance, headers, payload.concat(chunk)),
 
+  fresh: () => createClient(instance, {}, []),
+
   request: (path, options) =>
-    new Promise<ClientHttp2Response>((resolve, reject) => {
+    new Promise<Response>((resolve, reject) => {
       const stream: ClientHttp2Stream = instance
         .request(
           {
@@ -89,6 +86,6 @@ const createClient = (
 });
 
 export const client = (
-  autority: string | URL,
+  authority: string | URL,
   options?: SecureClientSessionOptions
-): Client => createClient(connect(autority, options), {}, []);
+): Client => createClient(connect(authority, options), {}, []);

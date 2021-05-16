@@ -5,12 +5,13 @@ import {
   createSecureServer,
   IncomingHttpHeaders,
   SecureServerOptions,
+  IncomingHttpStatusHeader,
 } from 'http2';
 
-import { Route } from './controllers';
-import { request } from './plugins/request';
-import { response } from './plugins/response';
-import { Http2ServerEventMap } from './types';
+import { Route } from './route';
+import { responseFor } from './plugins/response';
+import { accessRequest } from './plugins/access';
+import { Http2ServerEventMap, Request } from './types';
 
 export interface Server {
   /** Adds listeners to stream's events. */
@@ -26,38 +27,65 @@ export interface Server {
   listen: (port?: number, host?: string, listerner?: VoidFunction) => Server;
 }
 
+const createRequest = (
+  stream: ServerHttp2Stream,
+  headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
+  flags: number,
+  parameters: ReadonlyArray<string>
+): Request => ({ flags, stream, headers, parameters });
+
 const app = (
-  routes: ReadonlyArray<Route>,
+  internalRoutes: ReadonlyArray<
+    Pick<Route, 'method' | 'handle'> & { path: RegExp }
+  >,
   serverInstance: Http2SecureServer
 ): Server => ({
-  on: (event, listener) => app(routes, serverInstance.on(event, listener)),
+  on: (event, listener) =>
+    app(internalRoutes, serverInstance.on(event, listener)),
   use: (...routes: ReadonlyArray<Route>) =>
-    app(routes.concat(routes), serverInstance),
+    app(
+      internalRoutes.concat(
+        routes.map(({ path, method, handle }) => ({
+          path: new RegExp(path),
+          method,
+          handle,
+        }))
+      ),
+      serverInstance
+    ),
   listen: (
     port: number = 3333,
     host: string = 'localhost',
     listener?: VoidFunction
   ) =>
     app(
-      routes,
+      internalRoutes,
       serverInstance
         .on(
           'stream',
           (
             stream: ServerHttp2Stream,
-            headers: IncomingHttpHeaders,
+            headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
             flags: number
           ) => {
-            const requestPath = request(stream, headers).path;
-            const incomingMethod = request(stream, headers).method;
-
-            const handler = routes.find(
-              ({ method, path }) =>
-                method === incomingMethod && new RegExp(path).test(requestPath)
+            const { path: requestPath, method: incomingMethod } = accessRequest(
+              createRequest(stream, headers, flags, [])
             );
-            handler !== undefined
-              ? handler.handle(stream, headers, flags)
-              : response(stream)
+
+            const route = internalRoutes.find(
+              ({ method, path }) =>
+                method === incomingMethod && path.test(requestPath)
+            );
+            route !== undefined
+              ? route.handle(
+                  createRequest(
+                    stream,
+                    headers,
+                    flags,
+                    route.path.exec(requestPath)?.slice(1) ?? []
+                  )
+                )
+              : responseFor(createRequest(stream, headers, flags, []))
                   .header(
                     constants.HTTP2_HEADER_STATUS,
                     String(constants.HTTP_STATUS_NOT_FOUND)
@@ -68,7 +96,7 @@ const app = (
         .listen(port, host, listener)
     ),
   close: (callback?: (error?: Error) => void) =>
-    app(routes, serverInstance.close(callback)),
+    app(internalRoutes, serverInstance.close(callback)),
 });
 
 /**

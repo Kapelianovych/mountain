@@ -1,9 +1,9 @@
 import { resolve } from 'path';
 
-import { request } from '../plugins/request';
-import { response } from '../plugins/response';
 import { normalize } from '../utils';
-import { get, Route } from '../controllers';
+import { get, Route } from '../route';
+import { responseFor } from '../plugins/response';
+import { accessRequest } from '../plugins/access';
 
 const FILE_EXTENSION_REGEXP = /.+\.\w[\w\d]*$/;
 
@@ -12,10 +12,10 @@ const FILE_EXTENSION_REGEXP = /.+\.\w[\w\d]*$/;
  * By default files are searched in current working directory.
  */
 export const files = (dir: string = ''): Route =>
-  get(normalize(String(FILE_EXTENSION_REGEXP)), (stream, headers) => {
-    const path = request(stream, headers).path;
+  get(normalize(String(FILE_EXTENSION_REGEXP)), (request) => {
+    const path = accessRequest(request).path;
 
-    response(stream).file(
+    responseFor(request).file(
       resolve(dir, path.startsWith('/') ? path.slice(1) : path)
     );
   });

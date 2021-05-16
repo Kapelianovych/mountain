@@ -3,6 +3,7 @@ import type { TLSSocket } from 'tls';
 import type {
   Http2Stream,
   Http2Session,
+  ClientHttp2Stream,
   ServerHttp2Stream,
   Http2ServerRequest,
   ServerHttp2Session,
@@ -12,15 +13,27 @@ import type {
   SecureClientSessionOptions,
 } from 'http2';
 
-export type Handler = (
-  stream: ServerHttp2Stream,
-  headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
-  flags: number
-) => void;
+export interface Context {
+  readonly flags: number;
+  readonly stream: Http2Stream;
+  readonly headers: IncomingHttpHeaders & IncomingHttpStatusHeader;
+}
+
+export interface Response extends Context {
+  readonly stream: ClientHttp2Stream;
+}
+
+export interface Request extends Context {
+  readonly stream: ServerHttp2Stream;
+  /** Holds values of capturing groups of path. */
+  readonly parameters: ReadonlyArray<string>;
+}
+
+export type RequestHandler = (request: Request) => void;
 
 export interface Http2ServerEventMap {
   sessionError: (error: Error) => void;
-  stream: Handler;
+  stream: RequestHandler;
   timeout: VoidFunction;
   checkContinue: (
     request: Http2ServerRequest,
