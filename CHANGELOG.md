@@ -1,8 +1,23 @@
-# [1.0.0-alpha.1] - 2021-05-16
+# [1.0.0-alpha.2] - 2021-05-21
+
+### Added
+
+- `url` parameter to object that is returned by `accessRequest` function.
+- `patch` function.
+
+### Changed
+
+- `path` parameter of `client.request` method can also be type of `URL` now.
+
+### Removed
+
+- `path` parameter from object that is returned by `accessRequest` function.
+
+## [1.0.0-alpha.1] - 2021-05-16
 
 Completely rewrite package with TypeScript with absolutely new API.
 
-### Added 
+### Added
 
 - `cookies` object for parsing and creating cookies.
 - `responseFor` function for creating `Response` object.

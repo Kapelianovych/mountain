@@ -1,5 +1,6 @@
 import { constants } from 'http2';
 
+import { createUrl } from '../utils/url';
 import { formData, json, text, urlencoded } from './body';
 import {
   Context,
@@ -49,7 +50,7 @@ export interface Accessor {
 }
 
 export interface RequestAccessor extends Accessor {
-  readonly path: string;
+  readonly url: URL;
   readonly method: string;
   readonly parameters: ReadonlyArray<string>;
 }
@@ -77,7 +78,7 @@ const access = (context: Context): Accessor => ({
 
 export const accessRequest = (context: Request): RequestAccessor => ({
   ...access(context),
-  path: context.headers[constants.HTTP2_HEADER_PATH] as string,
+  url: createUrl(context.headers),
   method: context.headers[constants.HTTP2_HEADER_METHOD] as string,
   parameters: context.parameters,
 });

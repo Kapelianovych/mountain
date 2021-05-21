@@ -3,6 +3,12 @@ import { constants } from 'http2';
 import { group, get, put, route, post } from '../src';
 
 describe('routes', () => {
+  it('should add bounds to path property of the route', () => {
+    const testRoute = route('get', '/foo', () => {});
+
+    expect(testRoute.path).toBe('^/foo$');
+  });
+
   it('route created by route function should be equal to its shorter equivalent', () => {
     const postRoute = route(
       constants.HTTP2_METHOD_POST,

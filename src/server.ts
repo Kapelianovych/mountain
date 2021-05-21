@@ -68,13 +68,13 @@ const app = (
             headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
             flags: number
           ) => {
-            const { path: requestPath, method: incomingMethod } = accessRequest(
+            const { url, method: incomingMethod } = accessRequest(
               createRequest(stream, headers, flags, [])
             );
 
             const route = internalRoutes.find(
               ({ method, path }) =>
-                method === incomingMethod && path.test(requestPath)
+                method === incomingMethod && path.test(url.pathname)
             );
             route !== undefined
               ? route.handle(
@@ -82,7 +82,7 @@ const app = (
                     stream,
                     headers,
                     flags,
-                    route.path.exec(requestPath)?.slice(1) ?? []
+                    route.path.exec(url.pathname)?.slice(1) ?? []
                   )
                 )
               : responseFor(createRequest(stream, headers, flags, []))

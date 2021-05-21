@@ -146,7 +146,7 @@ interface Accessor {
 }
 
 interface RequestAccessor extends Accessor {
-  readonly path: string;
+  readonly url: URL;
   readonly method: string;
   readonly parameters: ReadonlyArray<string>;
 }
@@ -274,7 +274,7 @@ interface Client {
    * By default it performs **GET** request to _path_ URL.
    */
   request: (
-    path: string,
+    path: string | URL,
     options?: ClientSessionRequestOptions
   ) => Promise<Response>;
   /** Closes connection with remote peer. */
@@ -286,7 +286,7 @@ interface Client {
 }
 ```
 
-Client establish connection with remote peer (usually server). The same client can make multiple requests to remote peer. In order to do that after every request you should re`fresh` client.
+Client establishes connection with remote peer (usually server). The same client can make multiple requests to remote peer. In order to do that after every request you should re`fresh` client.
 
 ```ts
 import { constants } from 'http2';
@@ -305,7 +305,7 @@ const result2: Promise<Response> = articleClient
   .request('/put/article');
 ```
 
-Client receive response from remote peer as an object:
+Client receives response from remote peer as an object:
 
 ```ts
 interface Response extends Context {

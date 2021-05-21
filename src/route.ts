@@ -1,7 +1,7 @@
 import { constants } from 'http2';
 
 import { RequestHandler } from './types';
-import { addBounds, normalize } from './utils';
+import { normalize, addBounds } from './utils/url';
 
 export interface Route {
   readonly path: string;
@@ -29,6 +29,8 @@ export const head = (path: string, handler: RequestHandler): Route =>
   route(constants.HTTP2_METHOD_HEAD, path, handler);
 export const post = (path: string, handler: RequestHandler): Route =>
   route(constants.HTTP2_METHOD_POST, path, handler);
+export const patch = (path: string, handler: RequestHandler): Route =>
+  route(constants.HTTP2_METHOD_PATCH, path, handler);
 export const options = (path: string, handler: RequestHandler): Route =>
   route(constants.HTTP2_METHOD_OPTIONS, path, handler);
 

@@ -1,6 +1,6 @@
 import { resolve } from 'path';
 
-import { normalize } from '../utils';
+import { normalize } from '../utils/url';
 import { get, Route } from '../route';
 import { responseFor } from '../plugins/response';
 import { accessRequest } from '../plugins/access';
@@ -13,9 +13,7 @@ const FILE_EXTENSION_REGEXP = /.+\.\w[\w\d]*$/;
  */
 export const files = (dir: string = ''): Route =>
   get(normalize(String(FILE_EXTENSION_REGEXP)), (request) => {
-    const path = accessRequest(request).path;
+    const { url } = accessRequest(request);
 
-    responseFor(request).file(
-      resolve(dir, path.startsWith('/') ? path.slice(1) : path)
-    );
+    responseFor(request).file(resolve(dir, url.pathname.slice(1)));
   });
