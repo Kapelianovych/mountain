@@ -3,6 +3,10 @@ import { constants } from 'http2';
 import { group, get, put, route, post } from '../src';
 
 describe('routes', () => {
+  it('should be callable', () => {
+    expect(typeof route).toBe('function');
+  });
+
   it('should add bounds to path property of the route', () => {
     const testRoute = route('get', '/foo', () => {});
 

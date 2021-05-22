@@ -63,7 +63,7 @@ const createClient = (
       const stream: ClientHttp2Stream = instance
         .request(
           {
-            [constants.HTTP2_HEADER_PATH]: path.toString(),
+            [constants.HTTP2_HEADER_PATH]: path,
             [constants.HTTP2_HEADER_METHOD]: constants.HTTP2_METHOD_GET,
             ...headers,
           },
