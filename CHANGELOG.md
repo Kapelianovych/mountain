@@ -1,4 +1,4 @@
-# Unreleased
+# [1.0.0-alpha.3] - 2021-05-23
 
 ### Removed
 

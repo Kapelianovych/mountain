@@ -24,7 +24,7 @@ export interface Server {
   /** Stops the server from establishing new sessions */
   close: (callback?: (error?: Error) => void) => Server;
   /** Starts the server listening to requests. */
-  listen: (port?: number, host?: string, listerner?: VoidFunction) => Server;
+  listen: (port?: number, host?: string, listener?: VoidFunction) => Server;
 }
 
 const createRequest = (

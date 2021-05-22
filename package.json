@@ -1,6 +1,6 @@
 {
   "name": "@prostory/mountain",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "Yet another HTTP/2 server and client.",
   "type": "module",
   "main": "./index.js",
