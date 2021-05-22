@@ -1,4 +1,10 @@
-# [1.0.0-alpha.2] - 2021-05-21
+# Unreleased
+
+### Removed
+
+- Ability to pass `URL` as first parameter to `client.request` method.
+
+## [1.0.0-alpha.2] - 2021-05-21
 
 ### Added
 

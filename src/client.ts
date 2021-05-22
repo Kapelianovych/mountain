@@ -28,7 +28,7 @@ export interface Client {
    * By default it performs **GET** request to _path_ URL.
    */
   request: (
-    path: string | URL,
+    path: string,
     options?: ClientSessionRequestOptions
   ) => Promise<Response>;
   /** Closes connection with remote peer. */
